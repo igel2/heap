@@ -1,0 +1,11 @@
+Name:            heap
+Version:         0.1
+License:         BSD3
+Author:          Stephan Friedrichs
+Stability:       beta
+Synopsis:        Haskell heap implementations
+Description:     Various Haskell heap implementations
+Build-Depends:   base
+Exposed-Modules: Data.Heap
+ghc-options:     -O
+
