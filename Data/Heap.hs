@@ -4,16 +4,22 @@
 -- An efficent implementation of min-, max- or custom-priority heaps
 -- based on the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 -- Structures\", Cambridge University Press, 1998, chapter 3.1.
+--
+-- If you need a minimum or maximum heap, use 'MinHeap' resp. 'MaxHeap'. If
+-- you want to define a custom order of the heap elements implement a
+-- 'HeapPolicy'.
+--
+-- This module is best imported @qualified@ in order to prevent name clashes
+-- with other modules.
 module Data.Heap (
 	-- * Heap type
 	Heap, MinHeap, MaxHeap,
 	HeapPolicy(..), MinPolicy, MaxPolicy,
 	-- * Query
-	null, isEmpty, size, findHead,
+	null, isEmpty, size, head,
 	-- * Construction
 	empty, singleton,
-	insert, deleteHead, deleteFindHead,
-	removeWhile,
+	insert, deleteHead, extractHead,
 	-- * Combine
 	union, unions,
 	-- * Conversion
@@ -28,13 +34,13 @@ module Data.Heap (
 import Data.List (foldl')
 import Data.Monoid
 import Data.Ord
-import Prelude hiding (null)
+import Prelude hiding (head, null)
 
 -- |
 -- The basic 'Heap' type.
 data Heap p a
 	= Empty
-	| Tree !Int a !(Heap p a) !(Heap p a)
+	| Tree {-# UNPACK #-} !Int a !(Heap p a) !(Heap p a)
 
 -- |
 -- A 'Heap' which will always extract the minimum first.
@@ -55,7 +61,7 @@ instance (HeapPolicy p a) => Ord (Heap p a) where
 		where	compare' [] [] = EQ
 			compare' [] _  = LT
 			compare' _  [] = GT
-			compare' (x:xs) (y:ys) = case heapCompare h1 x y of
+			compare' (x:xs) (y:ys) = case heapCompare (policy h1) x y of
 				EQ -> compare' xs ys
 				c  -> c
 
@@ -70,8 +76,8 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
 class HeapPolicy p a where
 	-- |
 	-- Compare two elements, just like 'compare' of the 'Ord' class.
-	-- /The first parameter must be ignored by the implementation!/
-	heapCompare :: Heap p a -> a -> a -> Ordering
+	-- /The first parameter must be ignored by the implementation/.
+	heapCompare :: p -> a -> a -> Ordering
 
 -- |
 -- Policy type for a 'MinHeap'.
@@ -101,8 +107,14 @@ isEmpty = null
 -- |
 -- /O(1)/. Calculate the rank of a 'Heap'.
 rank :: Heap p a -> Int
-rank Empty = 0
+rank Empty          = 0
 rank (Tree r _ _ _) = r
+
+-- |
+-- Gets the default policy instance for a 'Heap' that can be the first
+-- parameter of 'heapCompare'. This function always returns 'undefined'.
+policy :: Heap p a -> p
+policy = const undefined
 
 -- |
 -- /O(n)/. The number of elements in the 'Heap'.
@@ -112,8 +124,8 @@ size (Tree _ _ a b) = 1 + size a + size b
 
 -- |
 -- /O(1)/. Finds the minimum (depending on the 'HeapPolicy') of the 'Heap'.
-findHead :: (HeapPolicy p a) => Heap p a -> a
-findHead = fst . deleteFindHead
+head :: (HeapPolicy p a) => Heap p a -> a
+head = fst . extractHead
 
 -- |
 -- /O(1)/. Constructs an empty 'Heap'.
@@ -134,31 +146,21 @@ insert x h = union h (singleton x)
 -- /O(log n)/. Delete the minimum (depending on the 'HeapPolicy')
 -- from the 'Heap'.
 deleteHead :: (HeapPolicy p a) => Heap p a -> Heap p a
-deleteHead = snd . deleteFindHead
+deleteHead = snd . extractHead
 
 -- |
 -- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
 -- delete it from the 'Heap'.
-deleteFindHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-deleteFindHead Empty = (error "Heap is empty", Empty)
-deleteFindHead (Tree _ x a b) = (x, union a b)
-
--- |
--- Removes and returns results as long as the supplied function
--- returns 'Just'.
-removeWhile :: (HeapPolicy p a) => (a -> Maybe b) -> Heap p a -> (Heap p a, [b])
-removeWhile f heap
-	| null heap = (heap, [])
-	| otherwise = let (ak, nheap) = deleteFindHead heap in case f ak of
-		Nothing  -> (heap, [])
-		Just rem -> let (nnheap, rest) = removeWhile f nheap in (nnheap, rem:rest)
+extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
+extractHead Empty          = (error "Heap is empty", Empty)
+extractHead (Tree _ x a b) = (x, union a b)
 
 -- |
 -- /O(log max(n, m))/. The union of two 'Heap's.
 union :: (HeapPolicy p a) => Heap p a -> Heap p a -> Heap p a
 union h Empty = h
 union Empty h = h
-union heap1@(Tree _ x l1 r1) heap2@(Tree _ y l2 r2) = if LT == heapCompare heap1 x y
+union heap1@(Tree _ x l1 r1) heap2@(Tree _ y l2 r2) = if LT == heapCompare (policy heap1) x y
 	then makeT x l1 (union r1 heap2) -- keep smallest number on top and merge the other
 	else makeT y l2 (union r2 heap1) -- heap into the right branch, it's shorter
 
@@ -188,7 +190,7 @@ fromList = unions . (map singleton)
 -- |
 -- /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
-toList Empty = []
+toList Empty          = []
 toList (Tree _ x a b) = x : toList a ++ toList b
 
 -- |
@@ -200,7 +202,7 @@ elems = toList
 -- /O(n)/. Creates a 'Heap' from an ascending list. Note that the list
 -- has to be ascending corresponding to the 'HeapPolicy', not to it's
 -- 'Ord' instance declaration (if there is one).
--- /The precondition is not checked./
+-- /The precondition is not checked/.
 fromAscList :: (HeapPolicy p a) => [a] -> Heap p a
 fromAscList []     = Empty
 fromAscList (x:xs) = Tree 1 x (fromAscList xs) Empty
@@ -209,11 +211,11 @@ fromAscList (x:xs) = Tree 1 x (fromAscList xs) Empty
 -- /O(n)/. Lists elements of the 'Heap' in ascending order (corresponding
 -- to the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
-toAscList Empty          = []
+toAscList Empty            = []
 toAscList h@(Tree _ x a b) = x : mergeLists (toAscList a) (toAscList b)
 	where	mergeLists [] ys = ys
 		mergeLists xs [] = xs
-		mergeLists xs@(x:xs') ys@(y:ys') = if LT == heapCompare h x y
+		mergeLists xs@(x:xs') ys@(y:ys') = if LT == heapCompare (policy h) x y
 	      		then x : mergeLists xs' ys
 			else y : mergeLists xs  ys'
 
@@ -225,8 +227,8 @@ check Empty = True
 check h@(Tree r x left right) = let
 		leftRank  = rank left
 		rightRank = rank right
-	in (isEmpty left || LT /= heapCompare h (findHead left) x)
-		&& (isEmpty right || LT /= heapCompare h (findHead right) x)
+	in (isEmpty left || LT /= heapCompare (policy h) (head left) x)
+		&& (isEmpty right || LT /= heapCompare (policy h) (head right) x)
 		&& r == 1 + rightRank
 		&& leftRank >= rightRank
 		&& check left
