@@ -4,9 +4,9 @@ Stability:		beta
 License:		BSD3
 Author:			Stephan Friedrichs
 Maintainer:		stephan[dot]friedrichs[at]tu-bs[dot]de
+Category:		Data
 Synopsis:		Heaps in Haskell
 Description:		A flexible Haskell heap implementation
 Build-Depends:		base
 Exposed-Modules:	Data.Heap
 ghc-options:		-O
-
