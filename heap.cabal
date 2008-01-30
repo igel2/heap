@@ -4,7 +4,7 @@ License:         BSD3
 Author:          Stephan Friedrichs
 Stability:       beta
 Synopsis:        Heaps in Haskell
-Description:     Various Haskell heap implementations
+Description:     An effecient Haskell heap implementation
 Build-Depends:   base
 Exposed-Modules: Data.Heap
 ghc-options:     -O
