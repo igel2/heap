@@ -182,8 +182,8 @@ unions :: (HeapPolicy p a) => [Heap p a] -> Heap p a
 unions = foldl' union empty
 
 -- |
--- Builds a 'Heap' from the given elements. If you have a sorted list,
--- use 'fromAscList', which is much more efficient.
+-- Builds a 'Heap' from the given elements.
+-- You may want to use 'fromAscList', if you have a sorted list.
 fromList :: (HeapPolicy p a) => [a] -> Heap p a
 fromList = unions . (map singleton)
 
@@ -204,8 +204,9 @@ elems = toList
 -- 'Ord' instance declaration (if there is one).
 -- /The precondition is not checked/.
 fromAscList :: (HeapPolicy p a) => [a] -> Heap p a
-fromAscList []     = Empty
-fromAscList (x:xs) = Tree 1 x (fromAscList xs) Empty
+--fromAscList []     = Empty
+--fromAscList (x:xs) = Tree 1 x (fromAscList xs) Empty
+fromAscList = fromList -- Just as fast, but needs less memory. Why?
 
 -- |
 -- /O(n)/. Lists elements of the 'Heap' in ascending order (corresponding
