@@ -1,11 +1,12 @@
-Name:            heap
-Version:         0.1
-License:         BSD3
-Author:          Stephan Friedrichs (stephan[dot]friedrichs[at]tu-bs[dot]de)
-Stability:       beta
-Synopsis:        Heaps in Haskell
-Description:     A flexible Haskell heap implementation
-Build-Depends:   base
-Exposed-Modules: Data.Heap
-ghc-options:     -O
+Name:			heap
+Version:		0.1
+Stability:		Beta
+License:		BSD3
+Author:			Stephan Friedrichs
+Maintainer:		stephan[dot]friedrichs[at]tu-bs[dot]de
+Synopsis:		Heaps in Haskell
+Description:		A flexible Haskell heap implementation
+Build-Depends:		base
+Exposed-Modules:	Data.Heap
+ghc-options:		-O
 
