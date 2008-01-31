@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 
 -- | 
--- An efficent implementation of min-, max- or custom-priority heaps
+-- A flexible implementation of min-, max- or custom-priority heaps
 -- based on the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 -- Structures\", Cambridge University Press, 1998, chapter 3.1.
 --
@@ -33,7 +33,6 @@ module Data.Heap (
 
 import Data.List (foldl')
 import Data.Monoid
-import Data.Ord
 import Prelude hiding (head, null)
 
 -- |
@@ -76,6 +75,8 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
 class HeapPolicy p a where
 	-- |
 	-- Compare two elements, just like 'compare' of the 'Ord' class.
+	-- When applying a 'HeapPolicy' to a 'Heap', the minimal value
+	-- (defined by this order) will be the 'head' of the 'Heap'.
 	-- /The first parameter must be ignored by the implementation/.
 	heapCompare :: p -> a -> a -> Ordering
 
@@ -119,7 +120,7 @@ policy = const undefined
 -- |
 -- /O(n)/. The number of elements in the 'Heap'.
 size :: (Num n) => Heap p a -> n
-size Empty = 0
+size Empty          = 0
 size (Tree _ _ a b) = 1 + size a + size b
 
 -- |
@@ -165,7 +166,7 @@ union heap1@(Tree _ x l1 r1) heap2@(Tree _ y l2 r2) = if LT == heapCompare (poli
 	else makeT y l2 (union r2 heap1) -- heap into the right branch, it's shorter
 
 -- |
--- Combines a value x and two 'Heaps' to one 'Heap'. Therefore, x has to
+-- Combines a value @x@ and two 'Heaps' to one 'Heap'. Therefore, @x@ has to
 -- be less or equal the minima (depending on the 'HeapPolicy') of both
 -- 'Heap' parameters. /The precondition is not checked/.
 makeT :: a -> Heap p a -> Heap p a -> Heap p a
@@ -200,7 +201,7 @@ elems = toList
 
 -- |
 -- /O(n)/. Creates a 'Heap' from an ascending list. Note that the list
--- has to be ascending corresponding to the 'HeapPolicy', not to it's
+-- has to be ascending corresponding to the 'HeapPolicy', not to its
 -- 'Ord' instance declaration (if there is one).
 -- /The precondition is not checked/.
 fromAscList :: (HeapPolicy p a) => [a] -> Heap p a
@@ -228,10 +229,10 @@ check Empty = True
 check h@(Tree r x left right) = let
 		leftRank  = rank left
 		rightRank = rank right
-	in (isEmpty left || LT /= heapCompare (policy h) (head left) x)
-		&& (isEmpty right || LT /= heapCompare (policy h) (head right) x)
-		&& r == 1 + rightRank
-		&& leftRank >= rightRank
+	in (null left || LT /= heapCompare (policy h) (head left) x) -- heap property
+		&& (null right || LT /= heapCompare (policy h) (head right) x) -- dito
+		&& r == 1 + rightRank    -- rank = length of right spine
+		&& leftRank >= rightRank -- leftist property
 		&& check left
 		&& check right
 
