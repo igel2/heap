@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
 
 -- | 
 -- A flexible implementation of min-, max- or custom-priority heaps
@@ -74,22 +74,25 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
 -- a 'Heap'.
 class HeapPolicy p a where
 	-- |
-	-- Compare two elements, just like 'compare' of the 'Ord' class.
-	-- When applying a 'HeapPolicy' to a 'Heap', the minimal value
+	-- Compare two elements, just like 'compare' of the 'Ord' class,
+	-- so this function has to define a mathematical ordering.
+	-- When using a 'HeapPolicy' for a 'Heap', the minimal value
 	-- (defined by this order) will be the 'head' of the 'Heap'.
-	-- /The first parameter must be ignored by the implementation/.
-	heapCompare :: p -> a -> a -> Ordering
+	heapCompare :: p    -- ^ /Must not be used/.
+		-> a        -- ^ Must be compared to 3rd parameter.
+		-> a        -- ^ Must be compared to 2nd parameter.
+		-> Ordering -- ^ Result of the comparison.
 
 -- |
 -- Policy type for a 'MinHeap'.
-data MinPolicy = MinPolicy
+data MinPolicy
 
 instance (Ord a) => HeapPolicy MinPolicy a where
 	heapCompare = const compare
 
 -- |
 -- Policy type for a 'MaxHeap'
-data MaxPolicy = MaxPolicy
+data MaxPolicy
 
 instance (Ord a) => HeapPolicy MaxPolicy a where
 	heapCompare = const (flip compare)
@@ -214,7 +217,7 @@ fromAscList = fromList -- Just as fast, but needs less memory. Why?
 -- to the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList Empty            = []
-toAscList h@(Tree _ x a b) = x : mergeLists (toAscList a) (toAscList b)
+toAscList h@(Tree _ e a b) = e : mergeLists (toAscList a) (toAscList b)
 	where	mergeLists [] ys = ys
 		mergeLists xs [] = xs
 		mergeLists xs@(x:xs') ys@(y:ys') = if LT == heapCompare (policy h) x y
