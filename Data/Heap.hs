@@ -31,6 +31,7 @@ module Data.Heap (
 	check
 ) where
 
+import Data.Foldable (Foldable(foldMap))
 import Data.List (foldl')
 import Data.Monoid
 import Prelude hiding (head, null)
@@ -68,6 +69,10 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
 	mempty  = empty
 	mappend = union
 	mconcat = unions
+
+instance Foldable (Heap p) where
+	foldMap _ Empty          = mempty
+	foldMap f (Tree _ x l r) = foldMap f l `mappend` f x `mappend` foldMap f r
 
 -- |
 -- The 'HeapPolicy' class defines an order on the elements contained within
