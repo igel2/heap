@@ -1,4 +1,4 @@
-{-# LANGUAGE EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE CPP, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
 
 -- | 
 -- A flexible implementation of min-, max- or custom-priority heaps
@@ -37,6 +37,7 @@ import Data.Foldable (Foldable(foldMap))
 import Data.List (foldl')
 import Data.Monoid
 import Prelude hiding (filter, head, null)
+import Text.Read
 
 -- |
 -- The basic 'Heap' type.
@@ -75,6 +76,20 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
 instance Foldable (Heap p) where
 	foldMap _ Empty          = mempty
 	foldMap f (Tree _ x l r) = foldMap f l `mappend` f x `mappend` foldMap f r
+
+instance (HeapPolicy p a, Read a) => Read (Heap p a) where
+#ifdef __GLASGOW_HASKELL__
+	readPrec = parens $ prec 10 $ do
+		Ident "fromList" <- lexP
+		xs <- readPrec
+		return (fromList xs)
+	readListPrec = readListPrecDefault
+#else
+	readsPrec p = readParen (p > 10) $ \r -> do
+		("fromList", s) <- lex r
+		(xs, t) <- reads s
+		return (fromList xs, t)
+#endif
 
 -- |
 -- The 'HeapPolicy' class defines an order on the elements contained within
