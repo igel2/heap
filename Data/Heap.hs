@@ -22,6 +22,8 @@ module Data.Heap (
 	insert, deleteHead, extractHead,
 	-- * Combine
 	union, unions,
+	-- * Filter
+	filter, partition,
 	-- * Conversion
 	-- ** Lists
 	fromList, toList, elems,
@@ -34,7 +36,7 @@ module Data.Heap (
 import Data.Foldable (Foldable(foldMap))
 import Data.List (foldl')
 import Data.Monoid
-import Prelude hiding (head, null)
+import Prelude hiding (filter, head, null)
 
 -- |
 -- The basic 'Heap' type.
@@ -189,6 +191,24 @@ makeT x a b = let
 -- Builds the union over all given 'Heap's.
 unions :: (HeapPolicy p a) => [Heap p a] -> Heap p a
 unions = foldl' union empty
+
+-- |
+-- Removes all elements from a given 'Heap' that do not fulfil the
+-- predicate.
+filter :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
+filter p = fst . (partition p)
+
+-- |
+-- Partition the 'Heap' into two. @'partition' p h = (h1, h2)@:
+-- All elements in @h1@ fulfil the predicate @p@, those in @h2@ don't.
+-- @'union' h1 h2 = h@.
+partition :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> (Heap p a, Heap p a)
+partition _ Empty          = (empty, empty)
+partition p (Tree _ x l r)
+	| p x       = (makeT x l1 r1, union l2 r2)
+	| otherwise = (union l1 r1, makeT x l2 r2)
+	where	(l1, l2) = partition p l
+		(r1, r2) = partition p r
 
 -- |
 -- Builds a 'Heap' from the given elements.
