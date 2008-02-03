@@ -18,9 +18,10 @@ module Data.Heap (
 	-- * Query
 	null, isEmpty, size, head,
 	-- * Construction
-	empty, singleton,
-	insert, deleteHead, extractHead,
-	-- * Combine
+	empty, singleton, insert,
+	-- * Deletion
+	tail, extractHead,
+	-- * Union
 	union, unions,
 	-- * Filter
 	filter, partition,
@@ -36,7 +37,7 @@ module Data.Heap (
 import Data.Foldable (Foldable(foldMap))
 import Data.List (foldl')
 import Data.Monoid
-import Prelude hiding (filter, head, null)
+import Prelude hiding (filter, head, null, tail)
 import Text.Read
 
 -- |
@@ -171,8 +172,8 @@ insert x h = union h (singleton x)
 -- |
 -- /O(log n)/. Delete the minimum (depending on the 'HeapPolicy')
 -- from the 'Heap'.
-deleteHead :: (HeapPolicy p a) => Heap p a -> Heap p a
-deleteHead = snd . extractHead
+tail :: (HeapPolicy p a) => Heap p a -> Heap p a
+tail = snd . extractHead
 
 -- |
 -- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
