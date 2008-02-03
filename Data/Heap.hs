@@ -19,12 +19,14 @@ module Data.Heap (
 	null, isEmpty, size, head,
 	-- * Construction
 	empty, singleton, insert,
-	-- * Deletion
 	tail, extractHead,
 	-- * Union
 	union, unions,
 	-- * Filter
 	filter, partition,
+	-- * Subranges
+	take, drop, splitAt,
+	takeWhile, span, break,
 	-- * Conversion
 	-- ** Lists
 	fromList, toList, elems,
@@ -37,7 +39,7 @@ module Data.Heap (
 import Data.Foldable (Foldable(foldMap))
 import Data.List (foldl')
 import Data.Monoid
-import Prelude hiding (filter, head, null, tail)
+import Prelude hiding (break, drop, filter, head, null, tail, span, splitAt, take, takeWhile)
 import Text.Read
 
 -- |
@@ -147,7 +149,7 @@ policy = const undefined
 -- /O(n)/. The number of elements in the 'Heap'.
 size :: (Num n) => Heap p a -> n
 size Empty          = 0
-size (Tree _ _ a b) = 1 + size a + size b
+size (Tree _ _ l r) = 1 + size l + size r
 
 -- |
 -- /O(1)/. Finds the minimum (depending on the 'HeapPolicy') of the 'Heap'.
@@ -179,8 +181,52 @@ tail = snd . extractHead
 -- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
 -- delete it from the 'Heap'.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-extractHead Empty          = (error "Heap is empty", Empty)
-extractHead (Tree _ x a b) = (x, union a b)
+extractHead Empty          = (error "Heap is empty", empty)
+extractHead (Tree _ x l r) = (x, union l r)
+
+-- |
+-- Take the lowest @n@ elements in ascending order of the
+-- 'Heap' (according to the 'HeapPolicy').
+take :: (HeapPolicy p a) => Int -> Heap p a -> [a]
+take n = fst . (splitAt n)
+
+-- |
+-- Remove the lowest (according to the 'HeapPolicy') @n@ elements
+-- from the 'Heap'.
+drop :: (HeapPolicy p a) => Int -> Heap p a -> Heap p a
+drop n = snd . (splitAt n)
+
+-- |
+-- @'splitAt' n h@ returns an ascending list of the lowest @n@
+-- elements of @h@ (according to its 'HeapPolicy') and a 'Heap'
+-- like @h@, lacking those elements.
+splitAt :: (HeapPolicy p a) => Int -> Heap p a -> ([a], Heap p a)
+splitAt _ Empty     = ([], empty)
+splitAt n heap@(Tree _ x l r)
+	| n > 0     = let (xs, heap') = splitAt (n-1) (union l r) in (x:xs, heap')
+	| otherwise = ([], heap)
+
+-- |
+-- @'takeWhile' p h@ lists the longest prefix of elements in ascending
+-- order (according to its 'HeapPolicy') of @h@ that satisfy @p@.
+takeWhile :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> [a]
+takeWhile p = fst . (span p)
+
+-- |
+-- @'span' p h@ returns the longest prefix of elements in ascending
+-- order (according to its 'HeapPolicy') of @h@ that satisfy @p@ and
+-- a 'Heap' like @h@, lacking those elements.
+span :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
+span _ Empty        = ([], empty)
+span p heap@(Tree _ x l r)
+	| p x       = let (xs, heap') = span p (union l r) in (x:xs, heap')
+	| otherwise = ([], heap)
+-- |
+-- @'break' p h@ returns the longest prefix of elements in ascending
+-- order (according to its 'HeapPolicy') of @h@ that do /not/ satisfy @p@
+-- and a 'Heap' like @h@, lacking those elements.
+break :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
+break p = span (not . p)
 
 -- |
 -- /O(log max(n, m))/. The union of two 'Heap's.
@@ -219,7 +265,7 @@ filter p = fst . (partition p)
 -- All elements in @h1@ fulfil the predicate @p@, those in @h2@ don't.
 -- @'union' h1 h2 = h@.
 partition :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> (Heap p a, Heap p a)
-partition _ Empty          = (empty, empty)
+partition _ Empty   = (empty, empty)
 partition p (Tree _ x l r)
 	| p x       = (makeT x l1 r1, union l2 r2)
 	| otherwise = (union l1 r1, makeT x l2 r2)
@@ -236,7 +282,7 @@ fromList = unions . (map singleton)
 -- /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
 toList Empty          = []
-toList (Tree _ x a b) = x : toList a ++ toList b
+toList (Tree _ x l r) = x : toList l ++ toList r
 
 -- |
 -- /O(n)/. Lists elements of the 'Heap' in no specific order.
@@ -249,8 +295,8 @@ elems = toList
 -- 'Ord' instance declaration (if there is one).
 -- /The precondition is not checked/.
 fromAscList :: (HeapPolicy p a) => [a] -> Heap p a
---fromAscList []     = Empty
---fromAscList (x:xs) = Tree 1 x (fromAscList xs) Empty
+--fromAscList []     = empty
+--fromAscList (x:xs) = Tree 1 x (fromAscList xs) empty
 fromAscList = fromList -- Just as fast, but needs less memory. Why?
 
 -- |
@@ -258,7 +304,7 @@ fromAscList = fromList -- Just as fast, but needs less memory. Why?
 -- to the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList Empty            = []
-toAscList h@(Tree _ e a b) = e : mergeLists (toAscList a) (toAscList b)
+toAscList h@(Tree _ e l r) = e : mergeLists (toAscList l) (toAscList r)
 	where	mergeLists [] ys = ys
 		mergeLists xs [] = xs
 		mergeLists xs@(x:xs') ys@(y:ys') = if LT == heapCompare (policy h) x y
