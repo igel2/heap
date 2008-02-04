@@ -1,5 +1,5 @@
 Name:          heap
-Version:       0.2.1
+Version:       0.2.2
 Stability:     beta
 Category:      Data
 Synopsis:      Heaps in Haskell
@@ -16,3 +16,4 @@ Library
   Build-Depends:   base
   Exposed-Modules: Data.Heap
   ghc-options:     -O2 -Wall
+  Extensions:      CPP
