@@ -81,6 +81,7 @@ instance Foldable (Heap p) where
 	foldMap f (Tree _ x l r) = foldMap f l `mappend` f x `mappend` foldMap f r
 
 instance (HeapPolicy p a, Read a) => Read (Heap p a) where
+#ifndef __HADDOCK__
 #ifdef __GLASGOW_HASKELL__
 	readPrec = parens $ prec 10 $ do
 		Ident "fromList" <- lexP
@@ -92,6 +93,7 @@ instance (HeapPolicy p a, Read a) => Read (Heap p a) where
 		("fromList", s) <- lex r
 		(xs, t) <- reads s
 		return (fromList xs, t)
+#endif
 #endif
 
 -- |
