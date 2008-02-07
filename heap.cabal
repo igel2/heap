@@ -1,7 +1,7 @@
 Name:               heap
 Version:            0.2.2
 Stability:          beta
-Category:           Data
+Category:           Data, Data Structures
 Synopsis:           Heaps in Haskell
 Description:        A flexible Haskell heap implementation
 License:            BSD3

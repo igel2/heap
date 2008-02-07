@@ -238,7 +238,7 @@ union heap1@(Tree _ x l1 r1) heap2@(Tree _ y l2 r2) = if LT == heapCompare (poli
 	else makeT y l2 (union r2 heap1) -- heap into the right branch, it's shorter
 
 -- |
--- Combines a value @x@ and two 'Heaps' to one 'Heap'. Therefore, @x@ has to
+-- Combines a value @x@ and two 'Heap's to one 'Heap'. Therefore, @x@ has to
 -- be less or equal the minima (depending on the 'HeapPolicy') of both
 -- 'Heap' parameters. /The precondition is not checked/.
 makeT :: a -> Heap p a -> Heap p a -> Heap p a
