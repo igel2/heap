@@ -11,30 +11,31 @@
 --
 -- This module is best imported @qualified@ in order to prevent name clashes
 -- with other modules.
-module Data.Heap (
+module Data.Heap
+	(
 	-- * Heap type
-	Heap, MinHeap, MaxHeap,
-	HeapPolicy(..), MinPolicy, MaxPolicy,
+	  Heap, MinHeap, MaxHeap
+	, HeapPolicy(..), MinPolicy, MaxPolicy
 	-- * Query
-	null, isEmpty, size, head,
+	, null, isEmpty, size, head
 	-- * Construction
-	empty, singleton, insert,
-	tail, extractHead,
+	, empty, singleton, insert
+	, tail, extractHead
 	-- * Union
-	union, unions,
+	, union, unions
 	-- * Filter
-	filter, partition,
+	, filter, partition
 	-- * Subranges
-	take, drop, splitAt,
-	takeWhile, span, break,
+	, take, drop, splitAt
+	, takeWhile, span, break
 	-- * Conversion
 	-- ** Lists
-	fromList, toList, elems,
+	, fromList, toList, elems
 	-- ** Ordered lists
-	fromAscList, toAscList,
+	, fromAscList, toAscList
 	-- * Debugging
-	check
-) where
+	, check
+	) where
 
 import Data.Foldable (Foldable(foldMap))
 import Data.List (foldl')
@@ -64,12 +65,13 @@ instance (HeapPolicy p a) => Eq (Heap p a) where
 
 instance (HeapPolicy p a) => Ord (Heap p a) where
 	compare h1 h2 = compare' (toAscList h1) (toAscList h2)
-		where	compare' [] [] = EQ
-			compare' [] _  = LT
-			compare' _  [] = GT
-			compare' (x:xs) (y:ys) = case heapCompare (policy h1) x y of
-				EQ -> compare' xs ys
-				c  -> c
+		where
+		compare' [] [] = EQ
+		compare' [] _  = LT
+		compare' _  [] = GT
+		compare' (x:xs) (y:ys) = case heapCompare (policy h1) x y of
+			EQ -> compare' xs ys
+			c  -> c
 
 instance (HeapPolicy p a) => Monoid (Heap p a) where
 	mempty  = empty
@@ -243,8 +245,8 @@ union heap1@(Tree _ x l1 r1) heap2@(Tree _ y l2 r2) = if LT == heapCompare (poli
 -- 'Heap' parameters. /The precondition is not checked/.
 makeT :: a -> Heap p a -> Heap p a -> Heap p a
 makeT x a b = let
-		ra = rank a
-		rb = rank b
+	ra = rank a
+	rb = rank b
 	in if ra > rb
 		then Tree (rb + 1) x a b
 		else Tree (ra + 1) x b a
@@ -269,8 +271,9 @@ partition _ Empty   = (empty, empty)
 partition p (Tree _ x l r)
 	| p x       = (makeT x l1 r1, union l2 r2)
 	| otherwise = (union l1 r1, makeT x l2 r2)
-	where	(l1, l2) = partition p l
-		(r1, r2) = partition p r
+	where
+	(l1, l2) = partition p l
+	(r1, r2) = partition p r
 
 -- |
 -- Builds a 'Heap' from the given elements.
@@ -305,11 +308,12 @@ fromAscList = fromList -- Just as fast, but needs less memory. Why?
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList Empty            = []
 toAscList h@(Tree _ e l r) = e : mergeLists (toAscList l) (toAscList r)
-	where	mergeLists [] ys = ys
-		mergeLists xs [] = xs
-		mergeLists xs@(x:xs') ys@(y:ys') = if LT == heapCompare (policy h) x y
-	      		then x : mergeLists xs' ys
-			else y : mergeLists xs  ys'
+	where
+	mergeLists [] ys = ys
+	mergeLists xs [] = xs
+	mergeLists xs@(x:xs') ys@(y:ys') = if LT == heapCompare (policy h) x y
+		then x : mergeLists xs' ys
+		else y : mergeLists xs  ys'
 
 -- |
 -- Sanity checks for debugging. This includes checking the ranks and
@@ -317,11 +321,11 @@ toAscList h@(Tree _ e l r) = e : mergeLists (toAscList l) (toAscList r)
 check :: (HeapPolicy p a) => Heap p a -> Bool
 check Empty = True
 check h@(Tree r x left right) = let
-		leftRank  = rank left
-		rightRank = rank right
+	leftRank  = rank left
+	rightRank = rank right
 	in (null left || LT /= heapCompare (policy h) (head left) x) -- heap property
 		&& (null right || LT /= heapCompare (policy h) (head right) x) -- dito
-		&& r == 1 + rightRank    -- rank = length of right spine
+		&& r == 1 + rightRank    -- rank == length of right spine
 		&& leftRank >= rightRank -- leftist property
 		&& check left
 		&& check right
