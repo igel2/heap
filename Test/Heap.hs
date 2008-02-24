@@ -18,16 +18,22 @@ testHeap = do
 	quickCheck sizeProperty
 	putStr "Order property:                  "
 	quickCheck orderProperty
-	putStr "Head property:                   "
-	quickCheck headProperty
+	putStr "head/tail property:              "
+	quickCheck headTailProperty
+	putStr "take/drop/splitAt                "
+	quickCheck (takeDropSplitAtProperty :: Int -> MinHeap Int -> Bool)
 	putStr "read . show === id               "
 	quickCheck (readShowProperty :: MinHeap Int -> Bool)
 	putStr "fold                             "
 	quickCheck (foldProperty :: MaxHeap Int -> Bool)
 	putStr "fromList vs. fromAscList         "
 	quickCheck (fromListProperty :: [Int] -> Bool)
+	putStr "toList === elems                 "
+	quickCheck (toListProperty :: MaxHeap Int -> Bool)
 	putStr "partition and filter             "
 	quickCheck (partitionFilterProperty (\x -> x `mod` 2 == 0) :: MinHeap Int -> Bool)
+	putStr "ordering property                "
+	quickCheck (orderingProperty :: MinHeap Int -> MinHeap Int -> Bool)
 
 instance (Arbitrary a, HeapPolicy p a) => Arbitrary (Heap p a) where
 	arbitrary = do
@@ -40,7 +46,10 @@ leftistHeapProperty :: (HeapPolicy p a) => Heap p a -> Bool
 leftistHeapProperty = Heap.check
 
 sizeProperty :: Int -> Bool
-sizeProperty n = let n' = abs n in Heap.size (Heap.fromList [1..n'] :: MaxHeap Int) == n'
+sizeProperty n = let
+	n' = abs n
+	h  = Heap.fromList [1..n'] :: MaxHeap Int
+	in Heap.size h == n' && (if n' == 0 then Heap.isEmpty h && Heap.null h else True)
 
 orderProperty :: Int -> [Int] -> Bool
 orderProperty n xs = let
@@ -56,12 +65,20 @@ orderProperty n xs = let
 policy :: Heap p a -> p
 policy = const undefined
 
-headProperty :: [Int] -> Bool
-headProperty [] = True
-headProperty xs = let
+headTailProperty :: [Int] -> Bool
+headTailProperty [] = True
+headTailProperty xs = let
 		heap = fromList xs :: MaxHeap Int
-	in Heap.head heap == List.head (sortBy (heapCompare (policy heap)) xs)
+		xs'  = sortBy (heapCompare (policy heap)) xs
+	in Heap.head heap == List.head xs' && Heap.tail heap == (fromAscList (List.tail xs'))
 
+takeDropSplitAtProperty :: (Ord a) => Int -> MinHeap a -> Bool
+takeDropSplitAtProperty n heap = let
+	(begin, end) = Heap.splitAt n heap
+	begin'       = Heap.take n heap
+	end'         = Heap.drop n heap
+	in
+	begin == begin' && end == end'
 
 readShowProperty :: (HeapPolicy p a, Show a, Read a) => Heap p a -> Bool
 readShowProperty heap = heap == read (show heap)
@@ -72,9 +89,19 @@ foldProperty heap = foldl (+) 0 heap == foldl (+) 0 (toList heap)
 fromListProperty :: [Int] -> Bool
 fromListProperty xs = let xs' = sort xs in (fromList xs' :: MinHeap Int) == (fromAscList xs' :: MinHeap Int)
 
+toListProperty :: (HeapPolicy p a, Eq a) => Heap p a -> Bool
+toListProperty heap = toList heap == elems heap
+
 partitionFilterProperty :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Bool
 partitionFilterProperty p heap = let
 		(yes,  no)  = Heap.partition p heap
 		(yes', no') = List.partition p (toList heap)
 	in yes == fromList yes' && no == fromList no' && (Heap.filter p heap) == fromList yes'
+
+orderingProperty :: (Ord a) => MinHeap a -> MinHeap a -> Bool
+orderingProperty heap1 heap2 = let
+	list1 = toAscList heap1
+	list2 = toAscList heap2
+	in
+	compare heap1 heap2 == compare list1 list2
 
