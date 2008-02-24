@@ -181,9 +181,10 @@ tail = snd . extractHead
 
 -- |
 -- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
--- delete it from the 'Heap'.
+-- delete it from the 'Heap'. This function is undefined for an
+-- empty 'Heap'.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-extractHead Empty          = (error "Heap is empty", empty)
+extractHead Empty          = error "empty Heap"
 extractHead (Tree _ x l r) = (x, union l r)
 
 -- |
@@ -263,7 +264,7 @@ filter :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
 filter p = fst . (partition p)
 
 {-# RULES
-	"filter/filter" forall p1 p2 h. filter p2 (filter p1 h) = filter (\x -> p1 x && p2 x) h 
+	"filter/filter" forall p1 p2 h. filter p2 (filter p1 h) = filter (\x -> p1 x && p2 x) h
   #-}
 
 -- |
