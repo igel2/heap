@@ -105,7 +105,7 @@ class HeapPolicy p a where
 	-- so this function has to define a mathematical ordering.
 	-- When using a 'HeapPolicy' for a 'Heap', the minimal value
 	-- (defined by this order) will be the 'head' of the 'Heap'.
-	heapCompare :: p    -- ^ /Must not be used/.
+	heapCompare :: p    -- ^ /Must not be evaluated/.
 		-> a        -- ^ Must be compared to 3rd parameter.
 		-> a        -- ^ Must be compared to 2nd parameter.
 		-> Ordering -- ^ Result of the comparison.
