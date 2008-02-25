@@ -22,6 +22,8 @@ testHeap = do
 	quickCheck headTailProperty
 	putStr "take/drop/splitAt                "
 	quickCheck (takeDropSplitAtProperty :: Int -> MinHeap Int -> Bool)
+	putStr "takeWhile/span/break             "
+	quickCheck takeWhileSpanBreakProperty
 	putStr "read . show === id               "
 	quickCheck (readShowProperty :: MinHeap Int -> Bool)
 	putStr "fold                             "
@@ -79,6 +81,20 @@ takeDropSplitAtProperty n heap = let
 	end'         = Heap.drop n heap
 	in
 	begin == begin' && end == end'
+
+takeWhileSpanBreakProperty :: Int -> Int -> Bool
+takeWhileSpanBreakProperty length index = let
+	length'      = abs length
+	index'       = abs index
+	xs           = [1..(max length' index')]
+	heap         = Heap.fromAscList xs :: MinHeap Int
+	p1 x         = x <= index'
+	p2 x         = x > index'
+	(xs', heap') = Heap.span p1 heap
+	in
+	xs' == Heap.takeWhile p1 heap
+		&& (xs', heap') == Heap.break p2 heap
+--		&& ([1..(min length' index')], Heap.fromAscList [(min index' length')..(max length' index')]) == (xs', heap')
 
 readShowProperty :: (HeapPolicy p a, Show a, Read a) => Heap p a -> Bool
 readShowProperty heap = heap == read (show heap)
