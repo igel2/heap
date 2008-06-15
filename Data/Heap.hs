@@ -17,10 +17,9 @@ module Data.Heap
 	  Heap, MinHeap, MaxHeap
 	, HeapPolicy(..), MinPolicy, MaxPolicy
 	-- * Query
-	, null, isEmpty, size, head
+	, null, isEmpty, size, head, tail, extractHead
 	-- * Construction
 	, empty, singleton, insert
-	, tail, extractHead
 	-- * Union
 	, union, unions
 	-- * Filter
@@ -29,9 +28,9 @@ module Data.Heap
 	, take, drop, splitAt
 	, takeWhile, span, break
 	-- * Conversion
-	-- ** Lists
+	-- ** List
 	, fromList, toList, elems
-	-- ** Ordered lists
+	-- ** Ordered list
 	, fromAscList, toAscList
 	-- * Debugging
 	, check
@@ -159,6 +158,20 @@ head :: (HeapPolicy p a) => Heap p a -> a
 head = fst . extractHead
 
 -- |
+-- /O(log n)/. Delete the minimum (depending on the 'HeapPolicy')
+-- from the 'Heap'.
+tail :: (HeapPolicy p a) => Heap p a -> Heap p a
+tail = snd . extractHead
+
+-- |
+-- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
+-- delete it from the 'Heap'. This function is undefined for an
+-- empty 'Heap'.
+extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
+extractHead Empty          = error "empty Heap"
+extractHead (Tree _ x l r) = (x, union l r)
+
+-- |
 -- /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap p a
 empty = Empty
@@ -172,20 +185,6 @@ singleton x = Tree 1 x empty empty
 -- /O(log n)/. Insert an element in the 'Heap'.
 insert :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
 insert x h = union h (singleton x)
-
--- |
--- /O(log n)/. Delete the minimum (depending on the 'HeapPolicy')
--- from the 'Heap'.
-tail :: (HeapPolicy p a) => Heap p a -> Heap p a
-tail = snd . extractHead
-
--- |
--- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
--- delete it from the 'Heap'. This function is undefined for an
--- empty 'Heap'.
-extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-extractHead Empty          = error "empty Heap"
-extractHead (Tree _ x l r) = (x, union l r)
 
 -- |
 -- Take the lowest @n@ elements in ascending order of the
