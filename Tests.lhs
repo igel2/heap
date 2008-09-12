@@ -6,7 +6,6 @@
 > import Test.Heap
 >
 > main :: IO ()
-> main = do
->	testHeap
+> main = testHeap
 >
 
