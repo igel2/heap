@@ -38,11 +38,10 @@ testHeap = do
   quickCheck (orderingProperty :: MinHeap Int -> MinHeap Int -> Bool)
 
 instance (Arbitrary a, HeapPolicy p a) => Arbitrary (Heap p a) where
-	arbitrary = do
-		length <- choose (0, 100)
-		list   <- vector length
-		return (Heap.fromList list)
-	coarbitrary heap = variant (Heap.size heap)
+  arbitrary = do
+    length <- choose (0, 100)
+    list   <- vector length
+    return (Heap.fromList list)
 
 leftistHeapProperty :: (HeapPolicy p a) => Heap p a -> Bool
 leftistHeapProperty = Heap.check
