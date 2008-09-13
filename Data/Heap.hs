@@ -16,7 +16,7 @@ module Data.Heap
     Heap, MinHeap, MaxHeap
   , HeapPolicy(..), MinPolicy, MaxPolicy
     -- * Query
-  , null, isEmpty, size, head, tail, extractHead
+  , null, isEmpty, size, head, tail, view, extractHead
     -- * Construction
   , empty, singleton, insert
     -- * Union
@@ -94,15 +94,14 @@ instance (HeapPolicy p a, Read a) => Read (Heap p a) where
 -- | The 'HeapPolicy' class defines an order on the elements contained within
 -- a 'Heap'.
 class HeapPolicy p a where
-  -- |
-  -- Compare two elements, just like 'compare' of the 'Ord' class,
+  -- | Compare two elements, just like 'compare' of the 'Ord' class,
   -- so this function has to define a mathematical ordering.
   -- When using a 'HeapPolicy' for a 'Heap', the minimal value
   -- (defined by this order) will be the 'head' of the 'Heap'.
-  heapCompare :: p    -- ^ /Must not be evaluated/.
-    -> a        -- ^ Must be compared to 3rd parameter.
-    -> a        -- ^ Must be compared to 2nd parameter.
-    -> Ordering -- ^ Result of the comparison.
+  heapCompare :: p -- ^ /Must not be evaluated/.
+    -> a           -- ^ Must be compared to 3rd parameter.
+    -> a           -- ^ Must be compared to 2nd parameter.
+    -> Ordering    -- ^ Result of the comparison.
 
 -- | Policy type for a 'MinHeap'.
 data MinPolicy
@@ -150,11 +149,20 @@ tail :: (HeapPolicy p a) => Heap p a -> Heap p a
 tail = snd . extractHead
 
 -- | /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
+-- delete it from the 'Heap' if the 'Heap' is not empty. Otherwise,
+-- 'Nothing' is returned.
+view :: (HeapPolicy p a) => Heap p a -> Maybe (a, Heap p a)
+view Empty          = Nothing
+view (Tree _ x l r) = Just (x, union l r)
+
+-- | /Please don't use this function/. It is just provides backward
+-- compatibility. Use 'view' instead, as it does not provoke 'error's.
+--
+-- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and
 -- delete it from the 'Heap'. This function is undefined for an
 -- empty 'Heap'.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-extractHead Empty          = error "empty Heap"
-extractHead (Tree _ x l r) = (x, union l r)
+extractHead heap = maybe (error "empty heap") id (view heap)
 
 -- | /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap p a
