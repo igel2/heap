@@ -70,13 +70,13 @@ policy :: Heap p a -> p
 policy = const undefined
 
 headTailProperty :: [Int] -> Bool
-headTailProperty [] = True
-headTailProperty xs = let
-  heap = fromList xs :: MaxHeap Int
-  xs'  = sortBy (heapCompare (policy heap)) xs
-  in
-  Heap.head heap == List.head xs'
-    && Heap.tail heap == (fromAscList (List.tail xs'))
+headTailProperty []          = True
+headTailProperty list@(x:xs) = let
+  heap  = fromList list :: MaxHeap Int
+  list' = sortBy (heapCompare (policy heap)) list
+  in case view heap of
+    Nothing      -> False -- list is not empty
+    Just (h, hs) -> h == List.head list' && hs == (fromAscList (List.tail list'))
 
 takeDropSplitAtProperty :: (Ord a) => Int -> MinHeap a -> Bool
 takeDropSplitAtProperty n heap = let

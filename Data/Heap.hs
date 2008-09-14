@@ -1,8 +1,7 @@
 {-# LANGUAGE CPP, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
 
--- | 
--- A flexible implementation of min-, max- or custom-priority heaps based on the
--- leftist-heaps from Chris Okasaki's book \"Purely Functional Data
+-- | A flexible implementation of min-, max- or custom-priority heaps based on
+-- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 -- Structures\", Cambridge University Press, 1998, chapter 3.1.
 --
 -- If you need a minimum or maximum heap, use 'MinHeap' resp. 'MaxHeap'. If you
@@ -95,7 +94,7 @@ instance (HeapPolicy p a, Read a) => Read (Heap p a) where
 class HeapPolicy p a where
   -- | Compare two elements, just like 'compare' of the 'Ord' class, so this
   -- function has to define a mathematical ordering. When using a 'HeapPolicy'
-  -- for a 'Heap', the minimal value (defined by this order) will be the 'head'
+  -- for a 'Heap', the minimal value (defined by this order) will be the head
   -- of the 'Heap'.
   heapCompare :: p -- ^ /Must not be evaluated/.
     -> a           -- ^ Must be compared to 3rd parameter.
@@ -138,28 +137,28 @@ size :: (Num n) => Heap p a -> n
 size Empty          = 0
 size (Tree _ _ l r) = 1 + size l + size r
 
--- | /O(1)/. Finds the minimum (depending on the 'HeapPolicy') of the 'Heap'.
+-- | /Deprecated/. Please use the 'view' function instead, it's not partial.
 head :: (HeapPolicy p a) => Heap p a -> a
 head = fst . extractHead
 
--- | /O(log n)/. Delete the minimum (depending on the 'HeapPolicy')
--- from the 'Heap'.
+-- | /Deprecated/. Please use the 'view' function instead, it's not partial.
 tail :: (HeapPolicy p a) => Heap p a -> Heap p a
 tail = snd . extractHead
 
--- | /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and delete
--- it from the 'Heap' if the it is not empty. Otherwise, 'Nothing' is returned.
+-- | /O(log n)/ for the tail, /O(1)/ for the head. Find the minimum (depending
+-- on the 'HeapPolicy') and delete it from the 'Heap' (i. e. find head and tail
+-- of a heap) if it is not empty. Otherwise, 'Nothing' is returned.
 view :: (HeapPolicy p a) => Heap p a -> Maybe (a, Heap p a)
 view Empty          = Nothing
 view (Tree _ x l r) = Just (x, union l r)
 
--- | /Please don't use this function/. It is just provides backward
--- compatibility. Use 'view' instead, as it does not provoke 'error's.
---
--- /O(log n)/. Find the minimum (depending on the 'HeapPolicy') and delete it
--- from the 'Heap'. This function is undefined for an empty 'Heap'.
+-- | /Deprecated/. Please use the 'view' function instead, it's not partial.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
 extractHead heap = maybe (error "empty heap") id (view heap)
+
+{-# DEPRECATED head, tail, extractHead
+  "Please use the view function instead, it's not partial"
+  #-}
 
 -- | /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap p a
@@ -186,9 +185,10 @@ drop n = snd . (splitAt n)
 -- | @'splitAt' n h@ returns an ascending list of the lowest @n@ elements of @h@
 -- (according to its 'HeapPolicy') and a 'Heap' like @h@, lacking those elements.
 splitAt :: (HeapPolicy p a) => Int -> Heap p a -> ([a], Heap p a)
-splitAt _ Empty     = ([], empty)
-splitAt n heap@(Tree _ x l r)
-  | n > 0     = let (xs, heap') = splitAt (n-1) (union l r) in (x:xs, heap')
+splitAt n heap
+  | n > 0     = case view heap of
+    Nothing      -> ([], empty)
+    Just (h, hs) -> let (xs, heap') = splitAt (n-1) hs in (h:xs, heap')
   | otherwise = ([], heap)
 
 -- | @'takeWhile' p h@ lists the longest prefix of elements in ascending order
@@ -200,10 +200,11 @@ takeWhile p = fst . (span p)
 -- (according to its 'HeapPolicy') of @h@ that satisfy @p@ and a 'Heap' like
 -- @h@, lacking those elements.
 span :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
-span _ Empty        = ([], empty)
-span p heap@(Tree _ x l r)
-  | p x       = let (xs, heap') = span p (union l r) in (x:xs, heap')
-  | otherwise = ([], heap)
+span p heap = case view heap of
+  Nothing      -> ([], empty)
+  Just (h, hs) -> if p h
+    then let (xs, heap') = span p hs in (h:xs, heap')
+    else ([], heap)
 
 -- | @'break' p h@ returns the longest prefix of elements in ascending order
 -- (according to its 'HeapPolicy') of @h@ that do /not/ satisfy @p@ and a 'Heap'
@@ -262,7 +263,7 @@ fromList = unions . (map singleton)
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
 toList Empty          = []
-toList (Tree _ x l r) = x : toList l ++ toList r
+toList (Tree _ x l r) = x : toList l ++ toList r -- TODO: this is way slower than toAscList!
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 elems :: Heap p a -> [a]
@@ -272,21 +273,14 @@ elems = toList
 -- be ascending corresponding to the 'HeapPolicy', not to its 'Ord' instance
 -- declaration (if there is one). /The precondition is not checked/.
 fromAscList :: (HeapPolicy p a) => [a] -> Heap p a
---fromAscList []     = empty
---fromAscList (x:xs) = Tree 1 x (fromAscList xs) empty
-fromAscList = fromList -- Just as fast, but needs less memory. Why?
+fromAscList = fromList
 
 -- | /O(n)/. Lists elements of the 'Heap' in ascending order (corresponding to
 -- the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
-toAscList Empty            = []
-toAscList h@(Tree _ e l r) = e : mergeLists (toAscList l) (toAscList r)
-  where
-  mergeLists [] ys = ys
-  mergeLists xs [] = xs
-  mergeLists xs@(x:xs') ys@(y:ys') = if LT == heapCompare (policy h) x y
-    then x : mergeLists xs' ys
-    else y : mergeLists xs  ys'
+toAscList heap = case view heap of
+  Nothing      -> []
+  Just (x, xs) -> x : toAscList xs
 
 -- | Sanity checks for debugging. This includes checking the ranks and the heap
 -- and leftist (the left rank is at least the right rank) properties.
@@ -296,8 +290,8 @@ check h@(Tree r x left right) = let
   leftRank  = rank left
   rightRank = rank right
   in
-  (null left || LT /= heapCompare (policy h) (head left) x) -- heap property
-    && (null right || LT /= heapCompare (policy h) (head right) x) -- dito
+  (maybe True (\(lHead, _) -> LT /= heapCompare (policy h) lHead x) (view left))
+    && (maybe True (\(rHead, _) -> LT /= heapCompare (policy h) rHead x) (view right))
     && r == 1 + rightRank    -- rank == length of right spine
     && leftRank >= rightRank -- leftist property
     && check left && check right
