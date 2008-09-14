@@ -152,6 +152,8 @@ view :: (HeapPolicy p a) => Heap p a -> Maybe (a, Heap p a)
 view Empty          = Nothing
 view (Tree _ x l r) = Just (x, union l r)
 
+{-# INLINE view #-}
+
 -- | /Deprecated/. Please use the 'view' function instead, it's not partial.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
 extractHead heap = maybe (error "empty heap") id (view heap)
