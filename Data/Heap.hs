@@ -23,7 +23,7 @@ module Data.Heap
   , filter, partition
     -- * Subranges
   , take, drop, splitAt
-  , takeWhile, span, break
+  , takeWhile, dropWhile, span, break
     -- * Conversion
     -- ** List
   , fromList, toList, elems
@@ -33,11 +33,12 @@ module Data.Heap
   , check
   ) where
 
-import Data.Foldable (Foldable(foldMap))
-import qualified Data.Foldable as Foldable (toList)
-import Data.List (foldl')
+import Data.Foldable ( Foldable(foldMap) )
+import qualified Data.Foldable as Foldable ( toList )
+import Data.List ( foldl' )
 import Data.Monoid
-import Prelude hiding (break, drop, filter, head, null, tail, span, splitAt, take, takeWhile)
+import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
+                      , splitAt, take, takeWhile )
 import Text.Read
 
 -- | The basic 'Heap' type.
@@ -199,9 +200,14 @@ splitAt n heap
 takeWhile :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> [a]
 takeWhile p = fst . (span p)
 
+-- | @'dropWhile' p h@ removes the longest prefix of elements from @h@ that
+-- satisfy @p@.
+dropWhile :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
+dropWhile p = snd . (span p)
+
 -- | @'span' p h@ returns the longest prefix of elements in ascending order
 -- (according to its 'HeapPolicy') of @h@ that satisfy @p@ and a 'Heap' like
--- @h@, lacking those elements.
+-- @h@, with those elements removed.
 span :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
 span p heap = case view heap of
   Nothing      -> ([], empty)
@@ -211,7 +217,7 @@ span p heap = case view heap of
 
 -- | @'break' p h@ returns the longest prefix of elements in ascending order
 -- (according to its 'HeapPolicy') of @h@ that do /not/ satisfy @p@ and a 'Heap'
--- like @h@, lacking those elements.
+-- like @h@, with those elements removed.
 break :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
 break p = span (not . p)
 

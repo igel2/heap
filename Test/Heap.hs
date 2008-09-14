@@ -97,6 +97,7 @@ takeWhileSpanBreakProperty length index = let
   (xs', heap') = Heap.span p1 heap
   in
   xs' == Heap.takeWhile p1 heap
+    && heap' == Heap.dropWhile p1 heap
     && (xs', heap') == Heap.break p2 heap
 
 readShowProperty :: (HeapPolicy p a, Show a, Read a) => Heap p a -> Bool
