@@ -34,6 +34,7 @@ module Data.Heap
   ) where
 
 import Data.Foldable (Foldable(foldMap))
+import qualified Data.Foldable as Foldable (toList)
 import Data.List (foldl')
 import Data.Monoid
 import Prelude hiding (break, drop, filter, head, null, tail, span, splitAt, take, takeWhile)
@@ -264,8 +265,7 @@ fromList = unions . (map singleton)
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
-toList Empty          = []
-toList (Tree _ x l r) = x : toList l ++ toList r -- TODO: this is way slower than toAscList!
+toList = Foldable.toList
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 elems :: Heap p a -> [a]
