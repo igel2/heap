@@ -14,8 +14,15 @@
 -- This module is best imported @qualified@ in order to prevent name clashes
 -- with other modules.
 module Data.Heap
-  ( -- * Heap type
-    Heap, MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
+  ( -- * Types
+    -- ** Various heap flavours
+#ifdef __DEBUG__
+    Heap(..)
+#else
+    Heap
+#endif
+  , MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
+    -- ** Ordering policies
   , HeapPolicy(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
     -- * Query
   , null, isEmpty, size, head, tail, view, extractHead
@@ -33,8 +40,6 @@ module Data.Heap
   , fromList, toList, elems
     -- ** Ordered list
   , fromAscList, toAscList
-    -- * Debugging
-  , check
   ) where
 
 import Data.Foldable ( foldl', Foldable(foldMap) )
@@ -313,18 +318,4 @@ fromAscList = fromList
 -- the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList = takeWhile (const True)
-
--- | Sanity checks for debugging. This includes checking the ranks and the heap
--- and leftist (the left rank is at least the right rank) properties.
-check :: (HeapPolicy p a) => Heap p a -> Bool
-check Empty                   = True
-check h@(Tree r x left right) = let
-  leftRank  = rank left
-  rightRank = rank right
-  in
-  (maybe True (\(lHead, _) -> LT /= heapCompare (policy h) lHead x) (view left))
-    && (maybe True (\(rHead, _) -> LT /= heapCompare (policy h) rHead x) (view right))
-    && r == 1 + rightRank    -- rank == length of right spine
-    && leftRank >= rightRank -- leftist property
-    && check left && check right
 

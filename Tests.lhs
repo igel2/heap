@@ -1,4 +1,4 @@
-#! /usr/bin/env runghc
+#! /usr/bin/runghc -D__DEBUG__
 
 >
 > module Main where
