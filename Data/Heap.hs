@@ -68,7 +68,7 @@ type MinPrioHeap priority value = Heap FstMinPolicy (priority, value)
 type MaxPrioHeap priority value = Heap FstMaxPolicy (priority, value)
 
 instance (Show a) => Show (Heap p a) where
-  show h = "fromList " ++ (show . toList) h
+  show = ("fromList " ++) . show . toList
 
 instance (HeapPolicy p a) => Eq (Heap p a) where
   h1 == h2 = EQ == compare h1 h2
@@ -159,7 +159,7 @@ rank (Tree r _ _ _) = r
 -- | Gets the default policy instance for a 'Heap' that can be the first
 -- parameter of 'heapCompare'. This function always returns 'undefined'.
 policy :: Heap p a -> p
-policy = const undefined
+policy = undefined
 
 -- | /O(n)/. The number of elements in the 'Heap'.
 size :: (Num n) => Heap p a -> n
@@ -313,9 +313,7 @@ fromAscList = fromList
 -- | /O(n)/. Lists elements of the 'Heap' in ascending order (corresponding to
 -- the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
-toAscList heap = case view heap of
-  Nothing      -> []
-  Just (x, xs) -> x : toAscList xs
+toAscList = takeWhile (const True)
 
 -- | Sanity checks for debugging. This includes checking the ranks and the heap
 -- and leftist (the left rank is at least the right rank) properties.
