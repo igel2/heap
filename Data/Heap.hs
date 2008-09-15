@@ -37,9 +37,8 @@ module Data.Heap
   , check
   ) where
 
-import Data.Foldable ( Foldable(foldMap) )
+import Data.Foldable ( foldl', Foldable(foldMap) )
 import qualified Data.Foldable as Foldable ( toList )
-import Data.List ( foldl' )
 import Data.Monoid
 import Data.Ord
 import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
