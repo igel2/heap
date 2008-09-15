@@ -4,15 +4,19 @@
 -- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 -- Structures\", Cambridge University Press, 1998, chapter 3.1.
 --
--- If you need a minimum or maximum heap, use 'MinHeap' resp. 'MaxHeap'. If you
--- want to define a custom order of the heap elements implement a 'HeapPolicy'.
+-- Choose 'MinHeap' or 'MaxHeap' if you need a simple minimum or maximum heap.
+-- If you want to manually associate a priority with a value, use 'MinPrioHeap'
+-- or 'MaxPrioHeap'. They manage @(priority, value)@ tuples so that only the
+-- priority (and not the value) influences the order of elements. If you still
+-- need something different, define a custom order for the heap elements by
+-- implementing a 'HeapPolicy' and let the maintainer know, what's missing.
 --
 -- This module is best imported @qualified@ in order to prevent name clashes
 -- with other modules.
 module Data.Heap
   ( -- * Heap type
-    Heap, MinHeap, MaxHeap
-  , HeapPolicy(..), MinPolicy, MaxPolicy
+    Heap, MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
+  , HeapPolicy(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
     -- * Query
   , null, isEmpty, size, head, tail, view, extractHead
     -- * Construction
@@ -37,6 +41,7 @@ import Data.Foldable ( Foldable(foldMap) )
 import qualified Data.Foldable as Foldable ( toList )
 import Data.List ( foldl' )
 import Data.Monoid
+import Data.Ord
 import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
                       , splitAt, take, takeWhile )
 import Text.Read
@@ -51,6 +56,16 @@ type MinHeap a = Heap MinPolicy a
 
 -- | A 'Heap' with inverted order: The maximum will be extracted first.
 type MaxHeap a = Heap MaxPolicy a
+
+-- | A 'Heap' storing priority-value-associations. It only regards the priority
+-- for determining the order of elements, the tuple with minimal 'fst' value
+-- (i. e. priority) will always be the head of the 'Heap'.
+type MinPrioHeap priority value = Heap FstMinPolicy (priority, value)
+
+-- | A 'Heap' storing priority-value-associations. It only regards the priority
+-- for determining the order of elements, the tuple with maximal 'fst' value
+-- (i. e. priority) will always be the head of the 'Heap'.
+type MaxPrioHeap priority value = Heap FstMaxPolicy (priority, value)
 
 instance (Show a) => Show (Heap p a) where
   show h = "fromList " ++ (show . toList) h
@@ -109,11 +124,23 @@ data MinPolicy
 instance (Ord a) => HeapPolicy MinPolicy a where
   heapCompare = const compare
 
--- | Policy type for a 'MaxHeap'
+-- | Policy type for a 'MaxHeap'.
 data MaxPolicy
 
 instance (Ord a) => HeapPolicy MaxPolicy a where
   heapCompare = const (flip compare)
+
+-- | Policy type for a @(priority, value)@ 'MinPrioHeap'.
+data FstMinPolicy
+
+instance (Ord priority) => HeapPolicy FstMinPolicy (priority, value) where
+  heapCompare = const (comparing fst)
+
+-- | Policy type for a @(priority, value)@ 'MaxPrioHeap'.
+data FstMaxPolicy
+
+instance (Ord priority) => HeapPolicy FstMaxPolicy (priority, value) where
+  heapCompare = const (flip (comparing fst))
 
 -- | /O(1)/. Is the 'Heap' empty?
 null :: Heap p a -> Bool

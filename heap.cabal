@@ -21,6 +21,6 @@ Extra-Source-Files:  Tests.lhs, Test/Heap.hs
 Library
   Build-Depends:     base
   Exposed-Modules:   Data.Heap
-  ghc-options:       -Wall
+  ghc-options:       -O2 -Wall
   Extensions:        CPP
 
