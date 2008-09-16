@@ -160,8 +160,8 @@ rank :: Heap p a -> Int
 rank Empty          = 0
 rank (Tree r _ _ _) = r
 
--- | Gets the default policy instance for a 'Heap' that can be the first
--- parameter of 'heapCompare'. This function always returns 'undefined'.
+-- | This function is 'undefined' and just used as a type-helper to determine
+-- the first parameter of 'heapCompare'.
 policy :: Heap p a -> p
 policy = undefined
 
@@ -170,11 +170,17 @@ size :: (Num n) => Heap p a -> n
 size Empty          = 0
 size (Tree _ _ l r) = 1 + size l + size r
 
--- | /Deprecated/. Please use the 'view' function instead, it's not partial.
+-- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
+--
+-- /Warning:/ This function gives an 'error' for empty 'Heap's, please consider
+-- using the 'view' function instead, it's not partial.
 head :: (HeapPolicy p a) => Heap p a -> a
 head = fst . extractHead
 
--- | /Deprecated/. Please use the 'view' function instead, it's not partial.
+-- | /O(log n)/. Returns the 'Heap' with the 'head' removed.
+--
+-- /Warning:/ This function gives an 'error' for empty 'Heap's, please consider
+-- using the 'view' function instead, it's not partial.
 tail :: (HeapPolicy p a) => Heap p a -> Heap p a
 tail = snd . extractHead
 
@@ -187,13 +193,12 @@ view (Tree _ x l r) = Just (x, union l r)
 
 {-# INLINE view #-}
 
--- | /Deprecated/. Please use the 'view' function instead, it's not partial.
+-- | /O(log n)/. Returns 'head' and 'tail' of a 'Heap'.
+--
+-- /Warning:/ This function gives an 'error' for empty 'Heap's, please consider
+-- using the 'view' function instead, it's not partial.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
 extractHead heap = maybe (error "empty heap") id (view heap)
-
-{-# DEPRECATED head, tail, extractHead
-  "Please use the view function instead, it's not partial"
-  #-}
 
 -- | /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap p a
