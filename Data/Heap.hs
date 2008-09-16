@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
 
--- | A flexible implementation of min-, max- or custom-priority heaps based on
+-- | A flexible implementation of min-, max- and custom-priority heaps based on
 -- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 -- Structures\", Cambridge University Press, 1998, chapter 3.1.
 --
@@ -172,14 +172,14 @@ size (Tree _ _ l r) = 1 + size l + size r
 
 -- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
 --
--- /Warning:/ This function gives an 'error' for empty 'Heap's, please consider
+-- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
 -- using the 'view' function instead, it's not partial.
 head :: (HeapPolicy p a) => Heap p a -> a
 head = fst . extractHead
 
 -- | /O(log n)/. Returns the 'Heap' with the 'head' removed.
 --
--- /Warning:/ This function gives an 'error' for empty 'Heap's, please consider
+-- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
 -- using the 'view' function instead, it's not partial.
 tail :: (HeapPolicy p a) => Heap p a -> Heap p a
 tail = snd . extractHead
@@ -195,7 +195,7 @@ view (Tree _ x l r) = Just (x, union l r)
 
 -- | /O(log n)/. Returns 'head' and 'tail' of a 'Heap'.
 --
--- /Warning:/ This function gives an 'error' for empty 'Heap's, please consider
+-- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
 -- using the 'view' function instead, it's not partial.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
 extractHead heap = maybe (error "empty heap") id (view heap)
