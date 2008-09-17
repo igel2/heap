@@ -4,12 +4,20 @@
 -- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 -- Structures\", Cambridge University Press, 1998, chapter 3.1.
 --
--- Choose 'MinHeap' or 'MaxHeap' if you need a simple minimum or maximum heap.
--- If you want to manually associate a priority with a value, use 'MinPrioHeap'
--- or 'MaxPrioHeap'. They manage @(priority, value)@ tuples so that only the
--- priority (and not the value) influences the order of elements. If you still
--- need something different, define a custom order for the heap elements by
--- implementing a 'HeapPolicy' and let the maintainer know, what's missing.
+-- There are different flavours of 'Heap's, each of them following a different
+-- strategy when ordering its elements:
+--
+--  * Choose 'MinHeap' or 'MaxHeap' if you need a simple minimum or maximum heap
+--    (which always keeps the minimum/maximum element at the head of the 'Heap').
+--
+--  * If you wish to manually annotate a value with a priority, e. g. an
+--    @'IO' ()@ action with an 'Int' use 'MinPrioHeap' or 'MaxPrioHeap'. They
+--    manage @(priority, value)@ tuples so that only the priority (and not the
+--    value) influences the order of elements.
+--
+--  * If you still need something different, define a custom order for the heap
+--    elements by implementing a 'HeapPolicy' and let the maintainer know,
+--    what's missing.
 --
 -- This module is best imported @qualified@ in order to prevent name clashes
 -- with other modules.
