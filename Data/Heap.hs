@@ -206,7 +206,7 @@ view (Tree _ x l r) = Just (x, union l r)
 -- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
 -- using the 'view' function instead, it's not partial.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-extractHead heap = maybe (error "empty heap") id (view heap)
+extractHead heap = maybe (error (__FILE__ ++ ": empty heap in extractHead")) id (view heap)
 
 -- | /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap p a
