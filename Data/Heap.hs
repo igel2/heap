@@ -311,8 +311,9 @@ fromList = unions . (map singleton)
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
 toList Empty            = []
-toList (Tree _ _ x l r) = x : toList r ++ toList l -- r first, it's smaller
--- TODO: use size \in O(1)
+toList (Tree _ _ x l r) = x : if size r < size l
+        then toList r ++ toList l
+        else toList l ++ toList r
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 elems :: Heap p a -> [a]
