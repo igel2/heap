@@ -25,7 +25,7 @@ module Data.Heap
     ( -- * Types
       -- ** Various heap flavours
 #ifdef __DEBUG__
-      Heap(..)
+      Heap(..), policy
 #else
       Heap
 #endif
