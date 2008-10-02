@@ -40,20 +40,18 @@ instance (Arbitrary a, HeapPolicy p a) => Arbitrary (Heap p a) where
         return (Heap.fromList list)
 
 leftistHeapProperty :: (HeapPolicy p a) => Heap p a -> Bool
-leftistHeapProperty Empty                   = True
-leftistHeapProperty h@(Tree r x left right) = let
+leftistHeapProperty Empty                     = True
+leftistHeapProperty h@(Tree r s x left right) = let
     leftRank  = rank left
     rightRank = rank right
     in
     (maybe True (\(lHead, _) -> LT /= heapCompare (policy h) lHead x) (view left))
         && (maybe True (\(rHead, _) -> LT /= heapCompare (policy h) rHead x) (view right))
-        && r == 1 + rightRank    -- rank == length of right spine
-        && leftRank >= rightRank -- leftist property
+        && r == 1 + rightRank              -- rank == length of right spine
+        && leftRank >= rightRank           -- leftist property
+        && s == 1 + size left + size right -- check size
         && leftistHeapProperty left
         && leftistHeapProperty right
-        where
-        rank Empty           = 0
-        rank (Tree rr _ _ _) = rr
 
 sizeProperty :: Int -> Bool
 sizeProperty n = let

@@ -25,7 +25,7 @@ module Data.Heap
     ( -- * Types
       -- ** Various heap flavours
 #ifdef __DEBUG__
-      Heap(..), policy
+      Heap(..), rank, policy
 #else
       Heap
 #endif
@@ -59,8 +59,8 @@ import Text.Read
 
 -- | The basic 'Heap' type.
 data Heap p a
-    = Empty
-    | Tree {-# UNPACK #-} !Int a !(Heap p a) !(Heap p a)
+    = Empty -- rank, size, elem, left, right
+    | Tree {-# UNPACK #-} !Int {-# UNPACK #-} !Int a !(Heap p a) !(Heap p a)
 
 -- | A 'Heap' which will always extract the minimum first.
 type MinHeap a = Heap MinPolicy a
@@ -159,18 +159,18 @@ isEmpty = null
 
 -- | /O(1)/. Calculate the rank of a 'Heap'.
 rank :: Heap p a -> Int
-rank Empty          = 0
-rank (Tree r _ _ _) = r
+rank Empty            = 0
+rank (Tree r _ _ _ _) = r
 
 -- | This function is 'undefined' and just used as a type-helper to determine
 -- the first parameter of 'heapCompare'.
 policy :: Heap p a -> p
 policy = undefined
 
--- | /O(n)/. The number of elements in the 'Heap'.
-size :: (Num n) => Heap p a -> n
-size Empty          = 0
-size (Tree _ _ l r) = 1 + size l + size r
+-- | /O(1)/. The number of elements in the 'Heap'.
+size :: Heap p a -> Int
+size Empty            = 0
+size (Tree _ s _ _ _) = s
 
 -- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
 --
@@ -190,8 +190,8 @@ tail = snd . extractHead
 -- on the 'HeapPolicy') and delete it from the 'Heap' (i. e. find head and tail
 -- of a heap) if it is not empty. Otherwise, 'Nothing' is returned.
 view :: (HeapPolicy p a) => Heap p a -> Maybe (a, Heap p a)
-view Empty          = Nothing
-view (Tree _ x l r) = Just (x, union l r)
+view Empty            = Nothing
+view (Tree _ _ x l r) = Just (x, union l r)
 
 {-# INLINE view #-}
 
@@ -208,7 +208,7 @@ empty = Empty
 
 -- | /O(1)/. Create a singleton 'Heap'.
 singleton :: a -> Heap p a
-singleton x = Tree 1 x empty empty
+singleton x = Tree 1 1 x empty empty
 
 -- | /O(log n)/. Insert an element in the 'Heap'.
 insert :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
@@ -263,7 +263,7 @@ break p = span (not . p)
 union :: (HeapPolicy p a) => Heap p a -> Heap p a -> Heap p a
 union h Empty = h
 union Empty h = h
-union heap1@(Tree _ x l1 r1) heap2@(Tree _ y l2 r2) =
+union heap1@(Tree _ _ x l1 r1) heap2@(Tree _ _ y l2 r2) =
     if LT == heapCompare (policy heap1) x y
         then makeT x l1 (union r1 heap2) -- keep smallest number on top and merge the other
         else makeT y l2 (union r2 heap1) -- heap into the right branch, it's shorter
@@ -275,9 +275,10 @@ makeT :: a -> Heap p a -> Heap p a -> Heap p a
 makeT x a b = let
     ra = rank a
     rb = rank b
+    s  = size a + size b + 1
     in if ra > rb
-        then Tree (rb + 1) x a b
-        else Tree (ra + 1) x b a
+        then Tree (rb + 1) s x a b
+        else Tree (ra + 1) s x b a
 
 -- | Builds the union over all given 'Heap's.
 unions :: (HeapPolicy p a) => [Heap p a] -> Heap p a
@@ -295,7 +296,7 @@ filter p = fst . (partition p)
 -- in @h1@ fulfil the predicate @p@, those in @h2@ don't. @'union' h1 h2 = h@.
 partition :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> (Heap p a, Heap p a)
 partition _ Empty = (empty, empty)
-partition p (Tree _ x l r)
+partition p (Tree _ _ x l r)
     | p x       = (makeT x l1 r1, union l2 r2)
     | otherwise = (union l1 r1, makeT x l2 r2)
     where
@@ -309,8 +310,9 @@ fromList = unions . (map singleton)
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
-toList Empty          = []
-toList (Tree _ x l r) = x : toList r ++ toList l -- r first, it's smaller
+toList Empty            = []
+toList (Tree _ _ x l r) = x : toList r ++ toList l -- r first, it's smaller
+-- TODO: use size \in O(1)
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 elems :: Heap p a -> [a]
