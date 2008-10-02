@@ -22,33 +22,33 @@
 -- This module is best imported @qualified@ in order to prevent name clashes
 -- with other modules.
 module Data.Heap
-  ( -- * Types
-    -- ** Various heap flavours
+    ( -- * Types
+      -- ** Various heap flavours
 #ifdef __DEBUG__
-    Heap(..)
+      Heap(..)
 #else
-    Heap
+      Heap
 #endif
-  , MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
-    -- ** Ordering policies
-  , HeapPolicy(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
-    -- * Query
-  , null, isEmpty, size, head, tail, view, extractHead
-    -- * Construction
-  , empty, singleton, insert
-    -- * Union
-  , union, unions
-    -- * Filter
-  , filter, partition
-    -- * Subranges
-  , take, drop, splitAt
-  , takeWhile, dropWhile, span, break
-    -- * Conversion
-    -- ** List
-  , fromList, toList, elems
-    -- ** Ordered list
-  , fromAscList, toAscList
-  ) where
+    , MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
+      -- ** Ordering policies
+    , HeapPolicy(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
+      -- * Query
+    , null, isEmpty, size, head, tail, view, extractHead
+      -- * Construction
+    , empty, singleton, insert
+      -- * Union
+    , union, unions
+      -- * Filter
+    , filter, partition
+      -- * Subranges
+    , take, drop, splitAt
+    , takeWhile, dropWhile, span, break
+      -- * Conversion
+      -- ** List
+    , fromList, toList, elems
+      -- ** Ordered list
+    , fromAscList, toAscList
+    ) where
 
 import Data.Foldable ( foldl', Foldable(foldMap) )
 import qualified Data.Foldable as Foldable ( toList )
@@ -60,8 +60,8 @@ import Text.Read
 
 -- | The basic 'Heap' type.
 data Heap p a
-  = Empty
-  | Tree {-# UNPACK #-} !Int a !(Heap p a) !(Heap p a)
+    = Empty
+    | Tree {-# UNPACK #-} !Int a !(Heap p a) !(Heap p a)
 
 -- | A 'Heap' which will always extract the minimum first.
 type MinHeap a = Heap MinPolicy a
@@ -86,73 +86,72 @@ instance (HeapPolicy p a) => Eq (Heap p a) where
   h1 == h2 = EQ == compare h1 h2
 
 instance (HeapPolicy p a) => Ord (Heap p a) where
-  compare h1 h2 = compare' (toAscList h1) (toAscList h2)
-    where
-    compare' [] [] = EQ
-    compare' [] _  = LT
-    compare' _  [] = GT
-    compare' (x:xs) (y:ys) = case heapCompare (policy h1) x y of
-      EQ -> compare' xs ys
-      c  -> c
+    compare h1 h2 = compareBy (heapCompare (policy h1)) (toAscList h1) (toAscList h2)
+        where
+        compareBy :: (a -> a -> Ordering) -> [a] -> [a] -> Ordering
+        compareBy _   []     []     = EQ
+        compareBy _   []     _      = LT
+        compareBy _   _      []     = GT
+        compareBy cmp (x:xs) (y:ys) = mappend (cmp x y) (compareBy cmp xs ys)
 
 instance (HeapPolicy p a) => Monoid (Heap p a) where
-  mempty  = empty
-  mappend = union
-  mconcat = unions
+    mempty  = empty
+    mappend = union
+    mconcat = unions
 
 instance Foldable (Heap p) where
-  foldMap _ Empty          = mempty
-  foldMap f (Tree _ x l r) = foldMap f l `mappend` f x `mappend` foldMap f r
+    foldMap _ Empty          = mempty
+    foldMap f (Tree _ x l r) = foldMap f l `mappend` f x `mappend` foldMap f r
 
 instance (HeapPolicy p a, Read a) => Read (Heap p a) where
 #ifdef __GLASGOW_HASKELL__
-  readPrec = parens $ prec 10 $ do
-    Ident "fromList" <- lexP
-    xs               <- readPrec
-    return (fromList xs)
-  readListPrec = readListPrecDefault
+    readPrec = parens $ prec 10 $ do
+        Ident "fromList" <- lexP
+        xs               <- readPrec
+        return (fromList xs)
+    readListPrec = readListPrecDefault
 #else
-  readsPrec p = readParen (p > 10) $ \r -> do
-    ("fromList", s) <- lex r
-    (xs, t)         <- reads s
-    return (fromList xs, t)
+    readsPrec p = readParen (p > 10) $ \r -> do
+        ("fromList", s) <- lex r
+        (xs, t)         <- reads s
+        return (fromList xs, t)
 #endif
 
 -- | The 'HeapPolicy' class defines an order on the elements contained within
 -- a 'Heap'.
 class HeapPolicy p a where
-  -- | Compare two elements, just like 'compare' of the 'Ord' class, so this
-  -- function has to define a mathematical ordering. When using a 'HeapPolicy'
-  -- for a 'Heap', the minimal value (defined by this order) will be the head
-  -- of the 'Heap'.
-  heapCompare :: p -- ^ /Must not be evaluated/.
-    -> a           -- ^ Must be compared to 3rd parameter.
-    -> a           -- ^ Must be compared to 2nd parameter.
-    -> Ordering    -- ^ Result of the comparison.
+    -- | Compare two elements, just like 'compare' of the 'Ord' class, so this
+    -- function has to define a mathematical ordering. When using a 'HeapPolicy'
+    -- for a 'Heap', the minimal value (defined by this order) will be the head
+    -- of the 'Heap'.
+    heapCompare :: p -- ^ /Must not be evaluated/.
+        -> a         -- ^ Compared to 3rd parameter.
+        -> a         -- ^ Compared to 2nd parameter.
+        -> Ordering  -- ^ Result of the comparison.
 
 -- | Policy type for a 'MinHeap'.
 data MinPolicy
 
 instance (Ord a) => HeapPolicy MinPolicy a where
-  heapCompare = const compare
+    heapCompare = const compare
 
 -- | Policy type for a 'MaxHeap'.
 data MaxPolicy
 
 instance (Ord a) => HeapPolicy MaxPolicy a where
-  heapCompare = const (flip compare)
+    heapCompare = const (flip compare)
 
 -- | Policy type for a @(priority, value)@ 'MinPrioHeap'.
 data FstMinPolicy
 
 instance (Ord priority) => HeapPolicy FstMinPolicy (priority, value) where
-  heapCompare = const (comparing fst)
+    heapCompare = const (comparing fst)
 
 -- | Policy type for a @(priority, value)@ 'MaxPrioHeap'.
 data FstMaxPolicy
 
 instance (Ord priority) => HeapPolicy FstMaxPolicy (priority, value) where
-  heapCompare = const (flip (comparing fst))
+    heapCompare = const (flip (comparing fst))
 
 -- | /O(1)/. Is the 'Heap' empty?
 null :: Heap p a -> Bool
@@ -234,10 +233,10 @@ drop n = snd . (splitAt n)
 -- (according to its 'HeapPolicy') and a 'Heap' like @h@, lacking those elements.
 splitAt :: (HeapPolicy p a) => Int -> Heap p a -> ([a], Heap p a)
 splitAt n heap
-  | n > 0     = case view heap of
-    Nothing      -> ([], empty)
-    Just (h, hs) -> let (xs, heap') = splitAt (n-1) hs in (h:xs, heap')
-  | otherwise = ([], heap)
+    | n > 0     = case view heap of
+        Nothing      -> ([], empty)
+        Just (h, hs) -> let (xs, heap') = splitAt (n-1) hs in (h:xs, heap')
+    | otherwise = ([], heap)
 
 -- | @'takeWhile' p h@ lists the longest prefix of elements in ascending order
 -- (according to its 'HeapPolicy') of @h@ that satisfy @p@.
@@ -254,10 +253,10 @@ dropWhile p = snd . (span p)
 -- @h@, with those elements removed.
 span :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
 span p heap = case view heap of
-  Nothing      -> ([], empty)
-  Just (h, hs) -> if p h
-    then let (xs, heap') = span p hs in (h:xs, heap')
-    else ([], heap)
+    Nothing      -> ([], empty)
+    Just (h, hs) -> if p h
+        then let (xs, heap') = span p hs in (h:xs, heap')
+        else ([], heap)
 
 -- | @'break' p h@ returns the longest prefix of elements in ascending order
 -- (according to its 'HeapPolicy') of @h@ that do /not/ satisfy @p@ and a 'Heap'
@@ -270,20 +269,20 @@ union :: (HeapPolicy p a) => Heap p a -> Heap p a -> Heap p a
 union h Empty = h
 union Empty h = h
 union heap1@(Tree _ x l1 r1) heap2@(Tree _ y l2 r2) =
-  if LT == heapCompare (policy heap1) x y
-    then makeT x l1 (union r1 heap2) -- keep smallest number on top and merge the other
-    else makeT y l2 (union r2 heap1) -- heap into the right branch, it's shorter
+    if LT == heapCompare (policy heap1) x y
+        then makeT x l1 (union r1 heap2) -- keep smallest number on top and merge the other
+        else makeT y l2 (union r2 heap1) -- heap into the right branch, it's shorter
 
 -- | Combines a value @x@ and two 'Heap's to one 'Heap'. Therefore, @x@ has to
 -- be less or equal the minima (depending on the 'HeapPolicy') of both 'Heap'
 -- parameters. /The precondition is not checked/.
 makeT :: a -> Heap p a -> Heap p a -> Heap p a
 makeT x a b = let
-  ra = rank a
-  rb = rank b
-  in if ra > rb
-    then Tree (rb + 1) x a b
-    else Tree (ra + 1) x b a
+    ra = rank a
+    rb = rank b
+    in if ra > rb
+        then Tree (rb + 1) x a b
+        else Tree (ra + 1) x b a
 
 -- | Builds the union over all given 'Heap's.
 unions :: (HeapPolicy p a) => [Heap p a] -> Heap p a
@@ -294,19 +293,19 @@ filter :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
 filter p = fst . (partition p)
 
 {-# RULES
-  "filter/filter" forall p1 p2 h. filter p2 (filter p1 h) = filter (\x -> p1 x && p2 x) h
-  #-}
+    "filter/filter" forall p1 p2 h. filter p2 (filter p1 h) = filter (\x -> p1 x && p2 x) h
+    #-}
 
 -- | Partition the 'Heap' into two. @'partition' p h = (h1, h2)@: All elements
 -- in @h1@ fulfil the predicate @p@, those in @h2@ don't. @'union' h1 h2 = h@.
 partition :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> (Heap p a, Heap p a)
 partition _ Empty = (empty, empty)
 partition p (Tree _ x l r)
-  | p x       = (makeT x l1 r1, union l2 r2)
-  | otherwise = (union l1 r1, makeT x l2 r2)
-  where
-  (l1, l2) = partition p l
-  (r1, r2) = partition p r
+    | p x       = (makeT x l1 r1, union l2 r2)
+    | otherwise = (union l1 r1, makeT x l2 r2)
+    where
+    (l1, l2) = partition p l
+    (r1, r2) = partition p r
 
 -- | Builds a 'Heap' from the given elements. You may want to use 'fromAscList',
 -- if you have a sorted list.
@@ -331,4 +330,3 @@ fromAscList = fromList
 -- the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList = takeWhile (const True)
-
