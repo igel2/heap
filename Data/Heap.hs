@@ -50,8 +50,7 @@ module Data.Heap
     , fromAscList, toAscList
     ) where
 
-import Data.Foldable ( foldl', Foldable(foldMap) )
-import qualified Data.Foldable as Foldable ( toList )
+import Data.Foldable ( foldl' )
 import Data.Monoid
 import Data.Ord
 import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
@@ -98,10 +97,6 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
     mempty  = empty
     mappend = union
     mconcat = unions
-
-instance Foldable (Heap p) where
-    foldMap _ Empty          = mempty
-    foldMap f (Tree _ x l r) = foldMap f l `mappend` f x `mappend` foldMap f r
 
 instance (HeapPolicy p a, Read a) => Read (Heap p a) where
 #ifdef __GLASGOW_HASKELL__
@@ -314,7 +309,8 @@ fromList = unions . (map singleton)
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
-toList = Foldable.toList
+toList Empty          = []
+toList (Tree _ x l r) = x : toList r ++ toList l -- r first, it's smaller
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 elems :: Heap p a -> [a]
