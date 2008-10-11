@@ -288,10 +288,6 @@ unions = foldl' union empty
 filter :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
 filter p = fst . (partition p)
 
-{-# RULES
-    "filter/filter" forall p1 p2 h. filter p2 (filter p1 h) = filter (\x -> p1 x && p2 x) h
-    #-}
-
 -- | Partition the 'Heap' into two. @'partition' p h = (h1, h2)@: All elements
 -- in @h1@ fulfil the predicate @p@, those in @h2@ don't. @'union' h1 h2 = h@.
 partition :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> (Heap p a, Heap p a)
