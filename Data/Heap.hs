@@ -79,10 +79,10 @@ type MinPrioHeap priority value = Heap FstMinPolicy (priority, value)
 type MaxPrioHeap priority value = Heap FstMaxPolicy (priority, value)
 
 instance (Show a) => Show (Heap p a) where
-  show = ("fromList " ++) . show . toList
+    show = ("fromList " ++) . show . toList
 
 instance (HeapPolicy p a) => Eq (Heap p a) where
-  h1 == h2 = EQ == compare h1 h2
+    h1 == h2 = EQ == compare h1 h2
 
 instance (HeapPolicy p a) => Ord (Heap p a) where
     compare h1 h2 = compareBy (heapCompare (policy h1)) (toAscList h1) (toAscList h2)
@@ -162,15 +162,15 @@ rank :: Heap p a -> Int
 rank Empty            = 0
 rank (Tree r _ _ _ _) = r
 
--- | This function is 'undefined' and just used as a type-helper to determine
--- the first parameter of 'heapCompare'.
-policy :: Heap p a -> p
-policy = undefined
-
 -- | /O(1)/. The number of elements in the 'Heap'.
 size :: Heap p a -> Int
 size Empty            = 0
 size (Tree _ s _ _ _) = s
+
+-- | This function is 'undefined' and just used as a type-helper to determine
+-- the first parameter of 'heapCompare'.
+policy :: Heap p a -> p
+policy = undefined
 
 -- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
 --
@@ -312,8 +312,8 @@ fromList = unions . (map singleton)
 toList :: Heap p a -> [a]
 toList Empty            = []
 toList (Tree _ _ x l r) = x : if size r < size l
-        then toList r ++ toList l
-        else toList l ++ toList r
+    then toList r ++ toList l
+    else toList l ++ toList r
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 elems :: Heap p a -> [a]
