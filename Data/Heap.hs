@@ -81,6 +81,20 @@ type MaxPrioHeap priority value = Heap FstMaxPolicy (priority, value)
 instance (Show a) => Show (Heap p a) where
     show = ("fromList " ++) . show . toList
 
+instance (HeapPolicy p a, Read a) => Read (Heap p a) where
+#ifdef __GLASGOW_HASKELL__
+    readPrec = parens $ prec 10 $ do
+        Ident "fromList" <- lexP
+        xs               <- readPrec
+        return (fromList xs)
+    readListPrec = readListPrecDefault
+#else
+    readsPrec p = readParen (p > 10) $ \r -> do
+        ("fromList", s) <- lex r
+        (xs, t)         <- reads s
+        return (fromList xs, t)
+#endif
+
 instance (HeapPolicy p a) => Eq (Heap p a) where
     h1 == h2 = EQ == compare h1 h2
 
@@ -97,20 +111,6 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
     mempty  = empty
     mappend = union
     mconcat = unions
-
-instance (HeapPolicy p a, Read a) => Read (Heap p a) where
-#ifdef __GLASGOW_HASKELL__
-    readPrec = parens $ prec 10 $ do
-        Ident "fromList" <- lexP
-        xs               <- readPrec
-        return (fromList xs)
-    readListPrec = readListPrecDefault
-#else
-    readsPrec p = readParen (p > 10) $ \r -> do
-        ("fromList", s) <- lex r
-        (xs, t)         <- reads s
-        return (fromList xs, t)
-#endif
 
 -- | The 'HeapPolicy' class defines an order on the elements contained within
 -- a 'Heap'.
