@@ -10,10 +10,10 @@
 --  * Choose 'MinHeap' or 'MaxHeap' if you need a simple minimum or maximum heap
 --    (which always keeps the minimum/maximum element at the head of the 'Heap').
 --
---  * If you wish to manually annotate a value with a priority, e. g. an
---    @'IO' ()@ action with an 'Int' use 'MinPrioHeap' or 'MaxPrioHeap'. They
---    manage @(priority, value)@ tuples so that only the priority (and not the
---    value) influences the order of elements.
+--  * If you wish to manually annotate a value with a priority, e. g. an @IO ()@
+--    action with an 'Int' use 'MinPrioHeap' or 'MaxPrioHeap'. They manage
+--    @(priority, value)@ tuples so that only the priority (and not the value)
+--    influences the order of elements.
 --
 --  * If you still need something different, define a custom order for the heap
 --    elements by implementing a 'HeapPolicy' and let the maintainer know,
@@ -65,7 +65,7 @@ data Heap p a
 -- | A 'Heap' which will always extract the minimum first.
 type MinHeap a = Heap MinPolicy a
 
--- | A 'Heap' with inverted order: The maximum will be extracted first.
+-- | A 'Heap' which will always extract the maximum first.
 type MaxHeap a = Heap MaxPolicy a
 
 -- | A 'Heap' storing priority-value-associations. It only regards the priority
@@ -175,14 +175,14 @@ policy = undefined
 -- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
 --
 -- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
--- using the 'view' function instead, it's not partial.
+-- using the 'view' function instead, it's safe.
 head :: (HeapPolicy p a) => Heap p a -> a
 head = fst . extractHead
 
 -- | /O(log n)/. Returns the 'Heap' with the 'head' removed.
 --
 -- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
--- using the 'view' function instead, it's not partial.
+-- using the 'view' function instead, it's safe.
 tail :: (HeapPolicy p a) => Heap p a -> Heap p a
 tail = snd . extractHead
 
@@ -192,13 +192,12 @@ tail = snd . extractHead
 view :: (HeapPolicy p a) => Heap p a -> Maybe (a, Heap p a)
 view Empty            = Nothing
 view (Tree _ _ x l r) = Just (x, union l r)
-
 {-# INLINE view #-}
 
 -- | /O(log n)/. Returns 'head' and 'tail' of a 'Heap'.
 --
 -- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
--- using the 'view' function instead, it's not partial.
+-- using the 'view' function instead, it's safe.
 extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
 extractHead heap = maybe (error (__FILE__ ++ ": empty heap in extractHead")) id (view heap)
 
