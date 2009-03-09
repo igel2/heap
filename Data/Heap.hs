@@ -35,9 +35,7 @@ module Data.Heap
       -- * Query
     , null, isEmpty, size, head, tail, view, extractHead
       -- * Construction
-    , empty, singleton, insert
-      -- * Union
-    , union, unions
+    , empty, singleton, insert, union, unions
       -- * Filter
     , filter, partition
       -- * Subranges

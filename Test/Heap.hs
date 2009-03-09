@@ -8,30 +8,25 @@ import Test.QuickCheck
 
 testHeap :: IO ()
 testHeap = do
-    putStr "Leftist property of MinHeap Int: "
-    quickCheck (leftistHeapProperty :: MinHeap Int -> Bool)
-    putStr "Leftist property of MaxHeap Int: "
-    quickCheck (leftistHeapProperty :: MaxHeap Int -> Bool)
-    putStr "Size property:                   "
-    quickCheck sizeProperty
-    putStr "Order property:                  "
-    quickCheck orderProperty
-    putStr "head/tail property:              "
-    quickCheck headTailProperty
-    putStr "take/drop/splitAt                "
-    quickCheck (takeDropSplitAtProperty :: Int -> MinHeap Int -> Bool)
-    putStr "takeWhile/span/break             "
-    quickCheck takeWhileSpanBreakProperty
-    putStr "read . show === id               "
-    quickCheck (readShowProperty :: MinHeap Int -> Bool)
-    putStr "fromList vs. fromAscList         "
-    quickCheck (fromListProperty :: [Int] -> Bool)
-    putStr "toList === elems                 "
-    quickCheck (toListProperty :: MaxHeap Int -> Bool)
-    putStr "partition and filter             "
-    quickCheck (partitionFilterProperty (\x -> x `mod` 2 == 0) :: MinHeap Int -> Bool)
-    putStr "ordering property                "
-    quickCheck (orderingProperty :: MinHeap Int -> MinHeap Int -> Bool)
+    qc "Leftist property of MinHeap Int" (leftistHeapProperty :: MinHeap Int -> Bool)
+    qc "Leftist property of MaxHeap Int" (leftistHeapProperty :: MaxHeap Int -> Bool)
+    qc "Size property" sizeProperty
+    qc "Order property" orderProperty
+    qc "head/tail property" headTailProperty
+    qc "take/drop/splitAt" (takeDropSplitAtProperty :: Int -> MinHeap Int -> Bool)
+    qc "takeWhile/span/break" takeWhileSpanBreakProperty
+    qc "read . show === id" (readShowProperty :: MinHeap Int -> Bool)
+    qc "fromList vs. fromAscList" (fromListProperty :: [Int] -> Bool)
+    qc "toList === elems" (toListProperty :: MaxHeap Int -> Bool)
+    qc "partition and filter" (partitionFilterProperty testProperty :: MinHeap Int -> Bool)
+    qc "ordering property" (orderingProperty :: MinHeap Int -> MinHeap Int -> Bool)
+    where
+    testProperty x = x `mod` 2 == 0
+
+qc :: (Testable prop) => String -> prop -> IO ()
+qc msg prop = quickCheck
+    $ whenFail (putStrLn msg)
+    $ label msg prop
 
 instance (Arbitrary a, HeapPolicy p a) => Arbitrary (Heap p a) where
     arbitrary = do
