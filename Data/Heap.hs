@@ -48,7 +48,6 @@ module Data.Heap
     , fromAscList, toAscList
     ) where
 
-import Data.Foldable ( foldl' )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
 import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
@@ -279,7 +278,14 @@ makeT x a b = let
 
 -- | Builds the union over all given 'Heap's.
 unions :: (HeapPolicy p a) => [Heap p a] -> Heap p a
-unions = foldl' union empty
+unions heaps = case map2' union heaps of
+    []  -> empty
+    [h] -> h
+    hs  -> unions hs
+    where
+    map2' :: (a -> a -> a) -> [a] -> [a]
+    map2' f (x1:x2:xs) = (: map2' f xs) $! f x1 x2
+    map2' _ xs         = xs
 
 -- | Removes all elements from a given 'Heap' that do not fulfil the predicate.
 filter :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
@@ -299,7 +305,7 @@ partition p (Tree _ _ x l r)
 -- | Builds a 'Heap' from the given elements. You may want to use 'fromAscList',
 -- if you have a sorted list.
 fromList :: (HeapPolicy p a) => [a] -> Heap p a
-fromList = unions . (map singleton)
+fromList = unions . (fmap singleton)
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
