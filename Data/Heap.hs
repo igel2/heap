@@ -49,8 +49,8 @@ module Data.Heap
     ) where
 
 import Data.Foldable ( foldl' )
-import Data.Monoid
-import Data.Ord
+import Data.Monoid ( Monoid(..) )
+import Data.Ord ( comparing )
 import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
                       , splitAt, take, takeWhile )
 import Text.Read
