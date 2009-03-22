@@ -52,7 +52,9 @@ import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
 import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
                       , splitAt, take, takeWhile )
+#ifdef __GLASGOW_HASKELL__
 import Text.Read
+#endif
 
 -- | The basic 'Heap' type.
 data Heap p a
