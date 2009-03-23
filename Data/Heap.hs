@@ -319,9 +319,9 @@ partition p (Tree _ _ x l r)
     (l1, l2) = partition p l
     (r1, r2) = partition p r
 
--- | Builds a 'Heap' from the given elements. Assuming you have a sorted list,
--- you may want to use 'fromDescList' or 'fromAscList', they are both faster
--- than this function.
+-- | /O(n log n)/. Builds a 'Heap' from the given elements. Assuming you have a
+-- sorted list, you may want to use 'fromDescList' or 'fromAscList', they are
+-- both faster than this function.
 fromList :: (HeapPolicy p a) => [a] -> Heap p a
 fromList xs = let
     heap = fromDescList $ sortBy (flip (heapCompare (policy heap))) xs
