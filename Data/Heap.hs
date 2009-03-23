@@ -46,8 +46,11 @@ module Data.Heap
     , fromList, toList, elems
       -- ** Ordered list
     , fromAscList, toAscList
+    , fromDescList, toDescList
     ) where
 
+import Data.Foldable ( foldl' )
+import Data.List ( sortBy )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
 import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
@@ -212,6 +215,14 @@ singleton x = Tree 1 1 x empty empty
 insert :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
 insert x h = union h (singleton x)
 
+-- | /O(1)/. Insert an element into the 'Heap' that is smaller than all elements
+-- currently in the 'Heap' (according to the 'HeapPolicy'), i. e. an element
+-- that will be the new 'head' of the 'Heap'.
+--
+-- /The precondition is not checked/.
+insertMin :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
+insertMin h hs = Tree 1 (1 + size hs) h hs empty
+
 -- | Take the lowest @n@ elements in ascending order of the 'Heap' (according
 -- to the 'HeapPolicy').
 take :: (HeapPolicy p a) => Int -> Heap p a -> [a]
@@ -268,7 +279,9 @@ union heap1@(Tree _ _ x l1 r1) heap2@(Tree _ _ y l2 r2) =
 
 -- | Combines a value @x@ and two 'Heap's to one 'Heap'. Therefore, @x@ has to
 -- be less or equal the minima (depending on the 'HeapPolicy') of both 'Heap'
--- parameters. /The precondition is not checked/.
+-- parameters.
+--
+-- /The precondition is not checked/.
 makeT :: a -> Heap p a -> Heap p a -> Heap p a
 makeT x a b = let
     ra = rank a
@@ -277,17 +290,19 @@ makeT x a b = let
     in if ra > rb
         then Tree (rb + 1) s x a b
         else Tree (ra + 1) s x b a
+{-# INLINE makeT #-}
 
 -- | Builds the union over all given 'Heap's.
 unions :: (HeapPolicy p a) => [Heap p a] -> Heap p a
-unions heaps = case map2' union heaps of
+unions heaps = case tournamentFold' heaps of
     []  -> empty
     [h] -> h
     hs  -> unions hs
     where
-    map2' :: (a -> a -> a) -> [a] -> [a]
-    map2' f (x1:x2:xs) = (: map2' f xs) $! f x1 x2
-    map2' _ xs         = xs
+    tournamentFold' :: (Monoid m) => [m] -> [m]
+    tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
+    tournamentFold' xs         = xs
+    {-# INLINE tournamentFold' #-}
 
 -- | Removes all elements from a given 'Heap' that do not fulfil the predicate.
 filter :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
@@ -304,10 +319,13 @@ partition p (Tree _ _ x l r)
     (l1, l2) = partition p l
     (r1, r2) = partition p r
 
--- | Builds a 'Heap' from the given elements. You may want to use 'fromAscList',
--- if you have a sorted list.
+-- | Builds a 'Heap' from the given elements. Assuming you have a sorted list,
+-- you may want to use 'fromDescList' or 'fromAscList', they are both faster
+-- than this function.
 fromList :: (HeapPolicy p a) => [a] -> Heap p a
-fromList = unions . (fmap singleton)
+fromList xs = let
+    heap = fromDescList $ sortBy (flip (heapCompare (policy heap))) xs
+    in heap
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
@@ -322,11 +340,30 @@ elems = toList
 
 -- | /O(n)/. Creates a 'Heap' from an ascending list. Note that the list has to
 -- be ascending corresponding to the 'HeapPolicy', not to its 'Ord' instance
--- declaration (if there is one). /The precondition is not checked/.
+-- declaration (if there is one). This function is faster than 'fromList' but
+-- not as fast as 'fromDescList'.
+--
+-- /The precondition is not checked/.
 fromAscList :: (HeapPolicy p a) => [a] -> Heap p a
-fromAscList = fromList
+fromAscList = fromDescList . reverse
 
 -- | /O(n)/. Lists elements of the 'Heap' in ascending order (corresponding to
 -- the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList = takeWhile (const True)
+
+-- | /O(n)/. Create a 'Heap' from a descending list. Note that the list has to
+-- be descending corresponding to the 'HeapPolicy', not to its 'Ord' instance
+-- declaration (if there is one). This function is provided, because it is much
+-- faster than 'fromList' and 'fromAscList'.
+--
+-- /The precondition is not checked/.
+fromDescList :: (HeapPolicy p a) => [a] -> Heap p a
+fromDescList = foldl' (flip insertMin) empty
+
+-- | /O(n)/. Lists the elements on the 'Heap' in descending order (corresponding
+-- to the 'HeapPolicy'). Note that this function is not especially efficient (it
+-- is implemented as @'reverse' . 'toAscList'@), it is just provided as a
+-- counterpart of the very efficient 'fromDescList' function.
+toDescList :: (HeapPolicy p a) => Heap p a -> [a]
+toDescList = reverse . toAscList
