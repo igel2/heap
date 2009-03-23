@@ -23,5 +23,5 @@ Library
   Build-Depends:     base
   Exposed-Modules:   Data.Heap
   GHC-Options:       -Wall -fwarn-tabs
-  Extensions:        CPP
+  Extensions:        CPP, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses
 
