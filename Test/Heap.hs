@@ -16,7 +16,7 @@ testHeap = do
     qc "take/drop/splitAt" (takeDropSplitAtProperty :: Int -> MinHeap Int -> Bool)
     qc "takeWhile/span/break" takeWhileSpanBreakProperty
     qc "read . show === id" (readShowProperty :: MinHeap Int -> Bool)
-    qc "fromList vs. fromAscList" (fromListProperty :: [Int] -> Bool)
+    qc "{from,to}{,Asc,Desc}List" (listProperty :: [Int] -> Bool)
     qc "toList === elems" (toListProperty :: MaxHeap Int -> Bool)
     qc "partition and filter" (partitionFilterProperty testProperty :: MinHeap Int -> Bool)
     qc "ordering property" (orderingProperty :: MinHeap Int -> MinHeap Int -> Bool)
@@ -104,11 +104,18 @@ takeWhileSpanBreakProperty len index = let
 readShowProperty :: (HeapPolicy p a, Show a, Read a) => Heap p a -> Bool
 readShowProperty heap = heap == read (show heap)
 
-fromListProperty :: [Int] -> Bool
-fromListProperty xs = let
-    xs' = sort xs
+listProperty :: [Int] -> Bool
+listProperty xs = let
+    xsAsc  = sort xs
+    xsDesc = reverse xsAsc
+    h1     = fromList xs         :: MinHeap Int
+    h2     = fromAscList xsAsc   :: MinHeap Int
+    h3     = fromDescList xsDesc :: MinHeap Int
     in
-    (fromList xs' :: MinHeap Int) == (fromAscList xs' :: MinHeap Int)
+    (h1 == h2) && (h2 == h3)
+        && (and (map leftistHeapProperty [h1, h2, h3]))
+        && (and (map ((== xsAsc) . toAscList) [h1, h2, h3]))
+        && (and (map ((== xsDesc) . toDescList) [h1, h2, h3]))
 
 toListProperty :: (HeapPolicy p a, Eq a) => Heap p a -> Bool
 toListProperty heap = toList heap == elems heap
