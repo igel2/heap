@@ -1,6 +1,6 @@
 
 Name:                heap
-Version:             0.6.0
+Version:             1.0.0
 Stability:           beta
 
 Category:            Data Structures
@@ -22,6 +22,6 @@ Tested-With:         GHC, Hugs
 Library
   Build-Depends:     base
   Exposed-Modules:   Data.Heap
-  GHC-Options:       -Wall -fwarn-tabs
+  GHC-Options:       -Wall -fwarn-tabs -Werror
   Extensions:        CPP, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses
 

@@ -33,7 +33,9 @@ module Data.Heap
       -- ** Ordering policies
     , HeapPolicy(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
       -- * Query
-    , null, isEmpty, size, head, tail, view, extractHead
+    , null, isEmpty, size, view
+      -- ** Unsafe queries
+    , unsafeHead, unsafeTail, unsafeUncons
       -- * Construction
     , empty, singleton, insert, union, unions
       -- * Filter
@@ -53,8 +55,8 @@ import Data.Foldable ( foldl' )
 import Data.List ( sortBy )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
-import Prelude hiding ( break, drop, dropWhile, filter, head, null, tail, span
-                      , splitAt, take, takeWhile )
+import Prelude hiding
+    ( break, drop, dropWhile, filter, null, span, splitAt, take, takeWhile )
 #ifdef __GLASGOW_HASKELL__
 import Text.Read
 #endif
@@ -174,20 +176,6 @@ size (Tree _ s _ _ _) = s
 policy :: Heap p a -> p
 policy = undefined
 
--- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
---
--- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
--- using the 'view' function instead, it's safe.
-head :: (HeapPolicy p a) => Heap p a -> a
-head = fst . extractHead
-
--- | /O(log n)/. Returns the 'Heap' with the 'head' removed.
---
--- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
--- using the 'view' function instead, it's safe.
-tail :: (HeapPolicy p a) => Heap p a -> Heap p a
-tail = snd . extractHead
-
 -- | /O(log n)/ for the tail, /O(1)/ for the head. Find the minimum (depending
 -- on the 'HeapPolicy') and delete it from the 'Heap' (i. e. find head and tail
 -- of a heap) if it is not empty. Otherwise, 'Nothing' is returned.
@@ -196,12 +184,23 @@ view Empty            = Nothing
 view (Tree _ _ x l r) = Just (x, union l r)
 {-# INLINE view #-}
 
--- | /O(log n)/. Returns 'head' and 'tail' of a 'Heap'.
+-- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
 --
--- /Warning:/ This function issues an 'error' for empty 'Heap's, please consider
--- using the 'view' function instead, it's safe.
-extractHead :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-extractHead heap = maybe (error (__FILE__ ++ ": empty heap in extractHead")) id (view heap)
+-- /Warning:/ @'unsafeHead' 'empty' = 'undefined'@, consider using 'view'.
+unsafeHead :: (HeapPolicy p a) => Heap p a -> a
+unsafeHead = fst . unsafeUncons
+
+-- | /O(log n)/. Returns the 'Heap' with the head removed.
+--
+-- /Warning:/ @'unsafeTail' 'empty' = 'undefined'@, consider using 'view'.
+unsafeTail :: (HeapPolicy p a) => Heap p a -> Heap p a
+unsafeTail = snd . unsafeUncons
+
+-- | /O(log n)/ for the tail, /O(1)/ for the head. Head and tail of a 'Heap'.
+--
+-- /Warning:/ @'unsafeUncons' 'empty' = 'undefined'@, consider using 'view'.
+unsafeUncons :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
+unsafeUncons heap = maybe (error (__FILE__ ++ ": empty heap in unsafeUncons")) id (view heap)
 
 -- | /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap p a
@@ -220,8 +219,8 @@ insert x h = union h (singleton x)
 -- that will be the new 'head' of the 'Heap'.
 --
 -- /The precondition is not checked/.
-insertMin :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
-insertMin h hs = Tree 1 (1 + size hs) h hs empty
+unsafeInsertMin :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
+unsafeInsertMin h hs = Tree 1 (1 + size hs) h hs empty
 
 -- | Take the lowest @n@ elements in ascending order of the 'Heap' (according
 -- to the 'HeapPolicy').
@@ -359,7 +358,7 @@ toAscList = takeWhile (const True)
 --
 -- /The precondition is not checked/.
 fromDescList :: (HeapPolicy p a) => [a] -> Heap p a
-fromDescList = foldl' (flip insertMin) empty
+fromDescList = foldl' (flip unsafeInsertMin) empty
 
 -- | /O(n)/. Lists the elements on the 'Heap' in descending order (corresponding
 -- to the 'HeapPolicy'). Note that this function is not especially efficient (it
