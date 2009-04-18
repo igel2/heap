@@ -18,9 +18,6 @@
 --  * If you still need something different, define a custom order for the heap
 --    elements by implementing a 'HeapPolicy' and let the maintainer know,
 --    what's missing.
---
--- This module is best imported @qualified@ in order to prevent name clashes
--- with other modules.
 module Data.Heap
     ( -- * Types
       -- ** Various heap flavours
@@ -216,7 +213,7 @@ insert x h = union h (singleton x)
 
 -- | /O(1)/. Insert an element into the 'Heap' that is smaller than all elements
 -- currently in the 'Heap' (according to the 'HeapPolicy'), i. e. an element
--- that will be the new 'head' of the 'Heap'.
+-- that will be the new head of the 'Heap'.
 --
 -- /The precondition is not checked/.
 unsafeInsertMin :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
@@ -233,7 +230,7 @@ drop :: (HeapPolicy p a) => Int -> Heap p a -> Heap p a
 drop n = snd . (splitAt n)
 
 -- | @'splitAt' n h@ returns an ascending list of the lowest @n@ elements of @h@
--- (according to its 'HeapPolicy') and a 'Heap' like @h@, lacking those elements.
+-- (according to its 'HeapPolicy') and @h@, with those elements removed.
 splitAt :: (HeapPolicy p a) => Int -> Heap p a -> ([a], Heap p a)
 splitAt n heap
     | n > 0     = case view heap of
@@ -252,8 +249,8 @@ dropWhile :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
 dropWhile p = snd . (span p)
 
 -- | @'span' p h@ returns the longest prefix of elements in ascending order
--- (according to its 'HeapPolicy') of @h@ that satisfy @p@ and a 'Heap' like
--- @h@, with those elements removed.
+-- (according to its 'HeapPolicy') of @h@ that satisfy @p@ and @h@, with those
+-- elements removed.
 span :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
 span p heap = case view heap of
     Nothing      -> ([], empty)
@@ -262,8 +259,8 @@ span p heap = case view heap of
         else ([], heap)
 
 -- | @'break' p h@ returns the longest prefix of elements in ascending order
--- (according to its 'HeapPolicy') of @h@ that do /not/ satisfy @p@ and a 'Heap'
--- like @h@, with those elements removed.
+-- (according to its 'HeapPolicy') of @h@ that do /not/ satisfy @p@ and @h@,
+-- with those elements removed.
 break :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
 break p = span (not . p)
 
@@ -353,7 +350,7 @@ toAscList = takeWhile (const True)
 
 -- | /O(n)/. Create a 'Heap' from a descending list. Note that the list has to
 -- be descending corresponding to the 'HeapPolicy', not to its 'Ord' instance
--- declaration (if there is one). This function is provided, because it is much
+-- declaration (if there is one). This function is provided, because it is
 -- faster than 'fromList' and 'fromAscList'.
 --
 -- /The precondition is not checked/.
@@ -363,6 +360,6 @@ fromDescList = foldl' (flip unsafeInsertMin) empty
 -- | /O(n)/. Lists the elements on the 'Heap' in descending order (corresponding
 -- to the 'HeapPolicy'). Note that this function is not especially efficient (it
 -- is implemented as @'reverse' . 'toAscList'@), it is just provided as a
--- counterpart of the very efficient 'fromDescList' function.
+-- counterpart of the efficient 'fromDescList' function.
 toDescList :: (HeapPolicy p a) => Heap p a -> [a]
 toDescList = reverse . toAscList
