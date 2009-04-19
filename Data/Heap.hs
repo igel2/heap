@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
 
 -- | A flexible implementation of min-, max- and custom-priority heaps based on
 -- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
@@ -52,6 +52,7 @@ import Data.Foldable ( foldl' )
 import Data.List ( sortBy )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
+import Data.Typeable ( Typeable )
 import Prelude hiding
     ( break, drop, dropWhile, filter, null, span, splitAt, take, takeWhile )
 
@@ -59,6 +60,7 @@ import Prelude hiding
 data Heap p a
     = Empty -- rank, size, elem, left, right
     | Tree {-# UNPACK #-} !Int {-# UNPACK #-} !Int a !(Heap p a) !(Heap p a)
+    deriving ( Typeable )
 
 -- | A 'Heap' which will always extract the minimum first.
 type MinHeap a = Heap MinPolicy a

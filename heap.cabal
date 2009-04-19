@@ -17,11 +17,11 @@ Maintainer:          Stephan Friedrichs (deduktionstheorem at web dot de)
 Build-Type:          Simple
 Cabal-Version:       >= 1.2
 Extra-Source-Files:  Test.lhs, Test/Heap.hs
-Tested-With:         GHC, Hugs
+Tested-With:         GHC
 
 Library
   Build-Depends:     base
   Exposed-Modules:   Data.Heap
   GHC-Options:       -Wall -fwarn-tabs -Werror
-  Extensions:        CPP, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses
+  Extensions:        CPP, EmptyDataDecls, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses
 
