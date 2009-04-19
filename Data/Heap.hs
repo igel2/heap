@@ -54,9 +54,6 @@ import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
 import Prelude hiding
     ( break, drop, dropWhile, filter, null, span, splitAt, take, takeWhile )
-#ifdef __GLASGOW_HASKELL__
-import Text.Read
-#endif
 
 -- | The basic 'Heap' type.
 data Heap p a
@@ -83,18 +80,10 @@ instance (Show a) => Show (Heap p a) where
     show = ("fromList " ++) . show . toList
 
 instance (HeapPolicy p a, Read a) => Read (Heap p a) where
-#ifdef __GLASGOW_HASKELL__
-    readPrec = parens $ prec 10 $ do
-        Ident "fromList" <- lexP
-        xs               <- readPrec
-        return (fromList xs)
-    readListPrec = readListPrecDefault
-#else
     readsPrec p = readParen (p > 10) $ \r -> do
         ("fromList", s) <- lex r
         (xs, t)         <- reads s
         return (fromList xs, t)
-#endif
 
 instance (HeapPolicy p a) => Eq (Heap p a) where
     h1 == h2 = EQ == compare h1 h2
