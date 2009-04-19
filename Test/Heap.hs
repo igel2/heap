@@ -2,20 +2,24 @@ module Test.Heap
     ( testHeap
     ) where
 
+import Data.Binary
 import Data.Heap as Heap
 import Data.List as List
+import Data.Monoid
 import Test.QuickCheck
 
 testHeap :: IO ()
 testHeap = do
     qc "Leftist property of MinHeap Int" (leftistHeapProperty :: MinHeap Int -> Bool)
     qc "Leftist property of MaxHeap Int" (leftistHeapProperty :: MaxHeap Int -> Bool)
+    qc "read . show === id" (readShowProperty :: MinHeap Int -> Bool)
+    qc "decode . encode === id" (binaryProperty :: MinHeap Int -> Bool)
+    qc "monoid property" (monoidProperty :: MinHeap Int -> MinHeap Int -> MinHeap Int -> Bool)
     qc "Size property" sizeProperty
     qc "Order property" orderProperty
     qc "head/tail property" headTailProperty
     qc "take/drop/splitAt" (takeDropSplitAtProperty :: Int -> MinHeap Int -> Bool)
     qc "takeWhile/span/break" takeWhileSpanBreakProperty
-    qc "read . show === id" (readShowProperty :: MinHeap Int -> Bool)
     qc "{from,to}{,Asc,Desc}List" (listProperty :: [Int] -> Bool)
     qc "toList === elems" (toListProperty :: MaxHeap Int -> Bool)
     qc "partition and filter" (partitionFilterProperty testProperty :: MinHeap Int -> Bool)
@@ -48,6 +52,23 @@ leftistHeapProperty h@(Tree r s x left right) = let
         && leftistHeapProperty left
         && leftistHeapProperty right
 
+readShowProperty :: (HeapPolicy p a, Show a, Read a) => Heap p a -> Bool
+readShowProperty heap = heap == read (show heap)
+
+binaryProperty :: (HeapPolicy p a, Eq a, Binary a) => Heap p a -> Bool
+binaryProperty heap = let
+    heap' = decode (encode heap)
+    in leftistHeapProperty heap' && heap' == heap
+
+monoidProperty :: (Monoid m, Eq m) => m -> m -> m -> Bool
+monoidProperty m1 m2 m3 = let
+    result = mconcat [m1, m2, m3]
+    in
+    result == (m1 `mappend` m2) `mappend` m3
+        && result == m1 `mappend` (m2 `mappend` m3)
+        && result == mempty `mappend` result
+        && result == result `mappend` mempty
+
 sizeProperty :: Int -> Bool
 sizeProperty n = let
     n' = abs n `mod` 100
@@ -77,6 +98,7 @@ headTailProperty list = let
     in case view heap of
         Nothing      -> False -- list is not empty
         Just (h, hs) -> h == List.head list' && hs == (fromAscList (List.tail list'))
+            && h == unsafeHead heap && hs == unsafeTail heap && (h, hs) == unsafeUncons heap
 
 takeDropSplitAtProperty :: (Ord a) => Int -> MinHeap a -> Bool
 takeDropSplitAtProperty n heap = let
@@ -100,9 +122,6 @@ takeWhileSpanBreakProperty len index = let
     xs' == Heap.takeWhile p1 heap
         && heap' == Heap.dropWhile p1 heap
         && (xs', heap') == Heap.break p2 heap
-
-readShowProperty :: (HeapPolicy p a, Show a, Read a) => Heap p a -> Bool
-readShowProperty heap = heap == read (show heap)
 
 listProperty :: [Int] -> Bool
 listProperty xs = let

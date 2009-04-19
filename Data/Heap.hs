@@ -48,6 +48,7 @@ module Data.Heap
     , fromDescList, toDescList
     ) where
 
+import Data.Binary ( Binary(..) )
 import Data.Foldable ( foldl' )
 import Data.List ( sortBy )
 import Data.Monoid ( Monoid(..) )
@@ -63,10 +64,10 @@ data Heap p a
     deriving ( Typeable )
 
 -- | A 'Heap' which will always extract the minimum first.
-type MinHeap a = Heap MinPolicy a
+type MinHeap = Heap MinPolicy
 
 -- | A 'Heap' which will always extract the maximum first.
-type MaxHeap a = Heap MaxPolicy a
+type MaxHeap = Heap MaxPolicy
 
 -- | A 'Heap' storing priority-value-associations. It only regards the priority
 -- for determining the order of elements, the tuple with minimal 'fst' value
@@ -103,6 +104,14 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
     mempty  = empty
     mappend = union
     mconcat = unions
+
+--instance Functor (MinPrioHeap priority) where
+--    fmap _ Empty                   = Empty
+--    fmap f (Tree r s x left right) = Tree r s (f x) (fmap f left) (fmap f right)
+
+instance (HeapPolicy p a, Binary a) => Binary (Heap p a) where
+    put = put . toDescList
+    get = fmap fromDescList get
 
 -- | The 'HeapPolicy' class defines an order on the elements contained within
 -- a 'Heap'.
