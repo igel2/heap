@@ -105,10 +105,6 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
     mappend = union
     mconcat = unions
 
---instance Functor (MinPrioHeap priority) where
---    fmap _ Empty                   = Empty
---    fmap f (Tree r s x left right) = Tree r s (f x) (fmap f left) (fmap f right)
-
 instance (HeapPolicy p a, Binary a) => Binary (Heap p a) where
     put = put . toDescList
     get = fmap fromDescList get
@@ -171,7 +167,7 @@ size (Tree _ s _ _ _) = s
 -- | This function is 'undefined' and just used as a type-helper to determine
 -- the first parameter of 'heapCompare'.
 policy :: Heap p a -> p
-policy = undefined
+policy = error $ __FILE__ ++ ": HeapPolicy was evaluated"
 
 -- | /O(log n)/ for the tail, /O(1)/ for the head. Find the minimum (depending
 -- on the 'HeapPolicy') and delete it from the 'Heap' (i. e. find head and tail
