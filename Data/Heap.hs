@@ -180,7 +180,8 @@ size (Tree _ s _ _ _) = s
 -- | This function is 'undefined' and just used as a type-helper to determine
 -- the first parameter of 'heapCompare'.
 policy :: Heap p a -> p
-policy = error $ __FILE__ ++ ": HeapPolicy was evaluated"
+policy = error "HeapPolicy p a: parameter p was evaluated"
+{-# INLINE policy #-}
 
 -- | /O(log n)/ for the tail, /O(1)/ for the head. Find the minimum (depending
 -- on the 'HeapPolicy') and delete it from the 'Heap' (i. e. find head and tail
@@ -206,7 +207,7 @@ unsafeTail = snd . unsafeUncons
 --
 -- /Warning:/ @'unsafeUncons' 'empty' = 'undefined'@, consider using 'view'.
 unsafeUncons :: (HeapPolicy p a) => Heap p a -> (a, Heap p a)
-unsafeUncons heap = maybe (error (__FILE__ ++ ": empty heap in unsafeUncons")) id (view heap)
+unsafeUncons heap = maybe (error "unsafeUncons: empty Heap") id (view heap)
 
 -- | /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap p a
