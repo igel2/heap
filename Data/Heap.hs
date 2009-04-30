@@ -213,8 +213,8 @@ insert x h = union h (singleton x)
 -- that will be the new head of the 'Heap'.
 --
 -- /The precondition is not checked/.
-uncheckedInsertMin :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
-uncheckedInsertMin h hs = assert
+uncheckedCons :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
+uncheckedCons h hs = assert
     (maybe True (\(h', _) -> GT /= heapCompare (policy hs) h h') (view hs))
     (Tree 1 (1 + size hs) h hs empty)
 
@@ -357,7 +357,7 @@ toAscList = takeWhile (const True)
 --
 -- /The precondition is not checked/.
 fromDescFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
-fromDescFoldable = foldl' (flip uncheckedInsertMin) empty
+fromDescFoldable = foldl' (flip uncheckedCons) empty
 {-# SPECIALISE fromDescFoldable :: (HeapPolicy p a) => [a] -> Heap p a #-}
 
 -- | /O(n)/. Lists the elements on the 'Heap' in descending order (corresponding
