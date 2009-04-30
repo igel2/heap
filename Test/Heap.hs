@@ -143,6 +143,7 @@ partitionFilterProperty p heap = let
     yes == fromFoldable yes'
         && no == fromFoldable no'
         && (Heap.filter p heap) == fromFoldable yes'
+        && yes `Heap.union` no == heap -- nothing gets lost
 
 orderingProperty :: (Ord a) => MinHeap a -> MinHeap a -> Bool
 orderingProperty heap1 heap2 = let
