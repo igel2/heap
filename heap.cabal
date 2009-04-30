@@ -23,5 +23,5 @@ Library
   Build-Depends:     base, binary >= 0.5
   Exposed-Modules:   Data.Heap
   GHC-Options:       -Wall -fwarn-tabs -Werror
-  Extensions:        CPP, EmptyDataDecls, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses
+  Extensions:        CPP, EmptyDataDecls, DeriveDataTypeable, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables
 

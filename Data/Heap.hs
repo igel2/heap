@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, DeriveDataTypeable, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables #-}
 
 -- | A flexible implementation of min-, max- and custom-priority heaps based on
 -- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
@@ -41,15 +41,15 @@ module Data.Heap
     , take, drop, splitAt
     , takeWhile, dropWhile, span, break
       -- * Conversion
+      -- ** Foldable
+    , fromFoldable, fromAscFoldable, fromDescFoldable
       -- ** List
-    , fromList, toList, elems
-      -- ** Ordered list
-    , fromAscList, toAscList
-    , fromDescList, toDescList
+    , toList, toAscList, toDescList
     ) where
 
 import Data.Binary ( Binary(..) )
-import Data.Foldable ( foldl' )
+import Data.Foldable ( Foldable, foldl' )
+import qualified Data.Foldable as Foldable ( toList )
 import Data.List ( sortBy )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
@@ -86,7 +86,7 @@ instance (HeapPolicy p a, Read a) => Read (Heap p a) where
     readsPrec p = readParen (p > 10) $ \r -> do
         ("fromList", s) <- lex r
         (xs, t)         <- reads s
-        return (fromList xs, t)
+        return ((fromFoldable :: [a] -> Heap p a) xs, t)
 
 instance (HeapPolicy p a) => Eq (Heap p a) where
     h1 == h2 = EQ == compare h1 h2
@@ -107,7 +107,7 @@ instance (HeapPolicy p a) => Monoid (Heap p a) where
 
 instance (HeapPolicy p a, Binary a) => Binary (Heap p a) where
     put = put . toDescList
-    get = fmap fromDescList get
+    get = fmap (fromDescFoldable :: [a] -> Heap p a) get
 
 -- | The 'HeapPolicy' class defines an order on the elements contained within
 -- a 'Heap'.
@@ -312,12 +312,15 @@ partition p (Tree _ _ x l r)
     (r1, r2) = partition p r
 
 -- | /O(n log n)/. Builds a 'Heap' from the given elements. Assuming you have a
--- sorted list, you may want to use 'fromDescList' or 'fromAscList', they are
--- both faster than this function.
-fromList :: (HeapPolicy p a) => [a] -> Heap p a
-fromList xs = let
-    heap = fromDescList $ sortBy (flip (heapCompare (policy heap))) xs
+-- sorted 'Foldalbe', you may want to use 'fromDescFoldable' or 'fromAscFoldable',
+-- they are faster than this function. Note that this function also works on
+-- lists, so no separate @fromList@ function is provided.
+fromFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
+fromFoldable xs = let
+    list = Foldable.toList xs
+    heap = fromDescFoldable $ sortBy (flip (heapCompare (policy heap))) list
     in heap
+{-# SPECIALISE fromFoldable :: (HeapPolicy p a) => [a] -> Heap p a #-}
 
 -- | /O(n)/. Lists elements of the 'Heap' in no specific order.
 toList :: Heap p a -> [a]
@@ -326,36 +329,37 @@ toList (Tree _ _ x l r) = x : if size r < size l
     then toList r ++ toList l
     else toList l ++ toList r
 
--- | /O(n)/. Lists elements of the 'Heap' in no specific order.
-elems :: Heap p a -> [a]
-elems = toList
-
--- | /O(n)/. Creates a 'Heap' from an ascending list. Note that the list has to
--- be ascending corresponding to the 'HeapPolicy', not to its 'Ord' instance
--- declaration (if there is one). This function is faster than 'fromList' but
--- not as fast as 'fromDescList'.
+-- | /O(n)/. Creates a 'Heap' from an ascending 'Foldable' implementation. Note
+-- that it has to be ascending corresponding to the 'HeapPolicy', not to its
+-- 'Ord' instance declaration (if there is one). This function is faster than
+-- 'fromFoldable' but not as fast as 'fromDescFoldable'. Note that this function
+-- also works on lists, so no separate @fromAscList@ function is provided.
 --
 -- /The precondition is not checked/.
-fromAscList :: (HeapPolicy p a) => [a] -> Heap p a
-fromAscList = fromDescList . reverse
+fromAscFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
+fromAscFoldable = fromDescFoldable . reverse . Foldable.toList
+{-# SPECIALISE fromAscFoldable :: (HeapPolicy p a) => [a] -> Heap p a #-}
 
 -- | /O(n)/. Lists elements of the 'Heap' in ascending order (corresponding to
 -- the 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList = takeWhile (const True)
 
--- | /O(n)/. Create a 'Heap' from a descending list. Note that the list has to
--- be descending corresponding to the 'HeapPolicy', not to its 'Ord' instance
--- declaration (if there is one). This function is provided, because it is
--- faster than 'fromList' and 'fromAscList'.
+-- | /O(n)/. Create a 'Heap' from a descending 'Foldable' implementation. Note
+-- that it has to be descending corresponding to the 'HeapPolicy', not to its
+-- 'Ord' instance declaration (if there is one). This function is provided,
+-- because it is faster than 'fromFoldable' and 'fromAscFoldable'. Note that
+-- this function also works on lists, so no separate @fromDescList@ function is
+-- provided.
 --
 -- /The precondition is not checked/.
-fromDescList :: (HeapPolicy p a) => [a] -> Heap p a
-fromDescList = foldl' (flip unsafeInsertMin) empty
+fromDescFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
+fromDescFoldable = foldl' (flip unsafeInsertMin) empty
+{-# SPECIALISE fromDescFoldable :: (HeapPolicy p a) => [a] -> Heap p a #-}
 
 -- | /O(n)/. Lists the elements on the 'Heap' in descending order (corresponding
 -- to the 'HeapPolicy'). Note that this function is not especially efficient (it
 -- is implemented as @'reverse' . 'toAscList'@), it is just provided as a
--- counterpart of the efficient 'fromDescList' function.
+-- counterpart of the efficient 'fromDescFoldable' function.
 toDescList :: (HeapPolicy p a) => Heap p a -> [a]
 toDescList = reverse . toAscList

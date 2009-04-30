@@ -20,8 +20,7 @@ testHeap = do
     qc "head/tail property" headTailProperty
     qc "take/drop/splitAt" (takeDropSplitAtProperty :: Int -> MinHeap Int -> Bool)
     qc "takeWhile/span/break" takeWhileSpanBreakProperty
-    qc "{from,to}{,Asc,Desc}List" (listProperty :: [Int] -> Bool)
-    qc "toList === elems" (toListProperty :: MaxHeap Int -> Bool)
+    qc "from{,Asc,Desc}Foldable, to{,Asc,Desc}List" (listProperty :: [Int] -> Bool)
     qc "partition and filter" (partitionFilterProperty testProperty :: MinHeap Int -> Bool)
     qc "ordering property" (orderingProperty :: MinHeap Int -> MinHeap Int -> Bool)
     where
@@ -36,7 +35,7 @@ instance (Arbitrary a, HeapPolicy p a) => Arbitrary (Heap p a) where
     arbitrary = do
         len  <- choose (0, 100)
         list <- vector len
-        return (Heap.fromList list)
+        return (fromFoldable list)
 
 leftistHeapProperty :: (HeapPolicy p a) => Heap p a -> Bool
 leftistHeapProperty Empty                     = True
@@ -72,18 +71,18 @@ monoidProperty m1 m2 m3 = let
 sizeProperty :: Int -> Bool
 sizeProperty n = let
     n' = abs n `mod` 100
-    h  = Heap.fromList [1..n'] :: MaxHeap Int
+    h  = fromFoldable [1..n'] :: MaxHeap Int
     in
     Heap.size h == n' && (if n' == 0 then Heap.isEmpty h && Heap.null h else True)
 
 orderProperty :: Int -> [Int] -> Bool
 orderProperty n list = let
     n'          = signum n * (n `mod` 100)
-    heap        = Heap.fromList list :: MaxHeap Int
+    heap        = fromFoldable list :: MaxHeap Int
     (a,  b)     = List.splitAt n' (sortBy (heapCompare (policy heap)) list)
     (a', heap') = Heap.splitAt n' heap
     in
-    (Heap.fromList b == heap') && equal heap a a'
+    (fromFoldable b == heap') && equal heap a a'
     where
     equal _ [] [] = True
     equal _ _  [] = False
@@ -93,11 +92,11 @@ orderProperty n list = let
 headTailProperty :: [Int] -> Bool
 headTailProperty []   = True
 headTailProperty list = let
-    heap  = fromList list :: MaxHeap Int
+    heap  = fromFoldable list :: MaxHeap Int
     list' = sortBy (heapCompare (policy heap)) list
     in case view heap of
         Nothing      -> False -- list is not empty
-        Just (h, hs) -> h == List.head list' && hs == (fromAscList (List.tail list'))
+        Just (h, hs) -> h == List.head list' && hs == (fromAscFoldable (List.tail list'))
             && h == unsafeHead heap && hs == unsafeTail heap && (h, hs) == unsafeUncons heap
 
 takeDropSplitAtProperty :: (Ord a) => Int -> MinHeap a -> Bool
@@ -114,7 +113,7 @@ takeWhileSpanBreakProperty len index = let
     length'      = abs (len `mod` 100)
     index'       = abs (index `mod` 100)
     xs           = [1..(max length' index')]
-    heap         = Heap.fromAscList xs :: MinHeap Int
+    heap         = Heap.fromAscFoldable xs :: MinHeap Int
     p1 x         = x <= index'
     p2 x         = x > index'
     (xs', heap') = Heap.span p1 heap
@@ -127,26 +126,23 @@ listProperty :: [Int] -> Bool
 listProperty xs = let
     xsAsc  = sort xs
     xsDesc = reverse xsAsc
-    h1     = fromList xs         :: MinHeap Int
-    h2     = fromAscList xsAsc   :: MinHeap Int
-    h3     = fromDescList xsDesc :: MinHeap Int
+    h1     = fromFoldable xs         :: MinHeap Int
+    h2     = fromAscFoldable xsAsc   :: MinHeap Int
+    h3     = fromDescFoldable xsDesc :: MinHeap Int
     in
     (h1 == h2) && (h2 == h3)
         && (and (map leftistHeapProperty [h1, h2, h3]))
         && (and (map ((== xsAsc) . toAscList) [h1, h2, h3]))
         && (and (map ((== xsDesc) . toDescList) [h1, h2, h3]))
 
-toListProperty :: (HeapPolicy p a, Eq a) => Heap p a -> Bool
-toListProperty heap = toList heap == elems heap
-
 partitionFilterProperty :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Bool
 partitionFilterProperty p heap = let
     (yes,  no)  = Heap.partition p heap
     (yes', no') = List.partition p (toList heap)
     in
-    yes == fromList yes'
-        && no == fromList no'
-        && (Heap.filter p heap) == fromList yes'
+    yes == fromFoldable yes'
+        && no == fromFoldable no'
+        && (Heap.filter p heap) == fromFoldable yes'
 
 orderingProperty :: (Ord a) => MinHeap a -> MinHeap a -> Bool
 orderingProperty heap1 heap2 = let
@@ -154,4 +150,3 @@ orderingProperty heap1 heap2 = let
     list2 = toAscList heap2
     in
     compare heap1 heap2 == compare list1 list2
-
