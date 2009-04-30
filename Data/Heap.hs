@@ -47,6 +47,7 @@ module Data.Heap
     , toList, toAscList, toDescList
     ) where
 
+import Control.Exception ( assert )
 import Data.Binary ( Binary(..) )
 import Data.Foldable ( Foldable, foldl' )
 import qualified Data.Foldable as Foldable ( toList )
@@ -212,8 +213,10 @@ insert x h = union h (singleton x)
 -- that will be the new head of the 'Heap'.
 --
 -- /The precondition is not checked/.
-unsafeInsertMin :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
-unsafeInsertMin h hs = Tree 1 (1 + size hs) h hs empty
+uncheckedInsertMin :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
+uncheckedInsertMin h hs = assert
+    (maybe True (\(h', _) -> GT /= heapCompare (policy hs) h h') (view hs))
+    (Tree 1 (1 + size hs) h hs empty)
 
 -- | Take the lowest @n@ elements in ascending order of the 'Heap' (according
 -- to the 'HeapPolicy').
@@ -354,7 +357,7 @@ toAscList = takeWhile (const True)
 --
 -- /The precondition is not checked/.
 fromDescFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
-fromDescFoldable = foldl' (flip unsafeInsertMin) empty
+fromDescFoldable = foldl' (flip uncheckedInsertMin) empty
 {-# SPECIALISE fromDescFoldable :: (HeapPolicy p a) => [a] -> Heap p a #-}
 
 -- | /O(n)/. Lists the elements on the 'Heap' in descending order (corresponding
