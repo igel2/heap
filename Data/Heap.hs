@@ -44,6 +44,8 @@ module Data.Heap
       -- ** Foldable
     , fromFoldable, fromAscFoldable, fromDescFoldable
       -- ** List
+      -- | Note that there are no @fromList@ functions, because they're implied
+      -- by 'fromFoldable' and friends (@[]@ is an instance of 'Foldable').
     , toList, toAscList, toDescList
     ) where
 
@@ -328,9 +330,8 @@ partition p (Tree _ _ x l r)
     (r1, r2) = partition p r
 
 -- | /O(n log n)/. Builds a 'Heap' from the given elements. Assuming you have a
--- sorted 'Foldalbe', you may want to use 'fromDescFoldable' or 'fromAscFoldable',
--- they are faster than this function. Note that this function also works on
--- lists, so no separate @fromList@ function is provided.
+-- sorted 'Foldable', you may want to use 'fromDescFoldable' or 'fromAscFoldable',
+-- they are faster than this function.
 fromFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
 fromFoldable xs = let
     list = Foldable.toList xs
@@ -348,9 +349,7 @@ toList (Tree _ _ x l r) = x : if size r < size l
 -- | /O(n)/. Creates a 'Heap' from an ascending 'Foldable' implementation. Note
 -- that it has to be ascending corresponding to the involved  'HeapPolicy', not
 -- to its 'Ord' instance declaration (if there is one). This function is faster
--- than 'fromFoldable' but not as fast as 'fromDescFoldable'. Note that this
--- function also works on lists, so no separate @fromAscList@ function is
--- provided.
+-- than 'fromFoldable' but not as fast as 'fromDescFoldable'.
 --
 -- /The precondition is not checked/.
 fromAscFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
@@ -366,8 +365,6 @@ toAscList = takeWhile (const True)
 -- that it has to be descending corresponding to the involved 'HeapPolicy', not
 -- to its 'Ord' instance declaration (if there is one). This function is
 -- provided, because it is faster than 'fromFoldable' and 'fromAscFoldable'.
--- Note that this function also works on lists, so no separate @fromDescList@
--- function is provided.
 --
 -- /The precondition is not checked/.
 fromDescFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
