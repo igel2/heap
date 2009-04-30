@@ -65,10 +65,10 @@ data Heap p a
     deriving ( Typeable )
 
 -- | A 'Heap' which will always extract the minimum first.
-type MinHeap = Heap MinPolicy
+type MinHeap a = Heap MinPolicy a
 
 -- | A 'Heap' which will always extract the maximum first.
-type MaxHeap = Heap MaxPolicy
+type MaxHeap a = Heap MaxPolicy a
 
 -- | A 'Heap' storing priority-value-associations. It only regards the priority
 -- for determining the order of elements, the tuple with minimal 'fst' value
@@ -112,6 +112,18 @@ instance (HeapPolicy p a, Binary a) => Binary (Heap p a) where
 
 -- | The 'HeapPolicy' class defines an order on the elements contained within
 -- a 'Heap'.
+--
+-- It works almost like the 'Ord' class (especially it has to define a correct
+-- mathematical ordering), the only difference is that there are two type
+-- parameters. They are needed to enable the type sytem to distinguish between
+-- two 'Heap's which each have a different 'HeapPolicy': It prevents errors like
+-- this one:
+--
+-- @
+-- let h1 = 'fromFoldable' [1..10] :: MinHeap Int
+--     h2 = 'fromFoldable' [1..10] :: MaxHeap Int
+--     h3 = 'union' h1 h2 -- we can't form the union of a Min- and a 'MaxHeap'
+-- @
 class HeapPolicy p a where
     -- | Compare two elements, just like 'compare' of the 'Ord' class, so this
     -- function has to define a mathematical ordering. When using a 'HeapPolicy'
@@ -208,9 +220,9 @@ singleton x = Tree 1 1 x empty empty
 insert :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
 insert x h = union h (singleton x)
 
--- | /O(1)/. Insert an element into the 'Heap' that is smaller than all elements
--- currently in the 'Heap' (according to the 'HeapPolicy'), i. e. an element
--- that will be the new head of the 'Heap'.
+-- | /O(1)/. Insert an element into the 'Heap' that is less or equal than all
+-- elements currently in the 'Heap' (according to the involved 'HeapPolicy'),
+-- i. e. an element that will be the new head of the 'Heap'.
 --
 -- /The precondition is not checked/.
 uncheckedCons :: (HeapPolicy p a) => a -> Heap p a -> Heap p a
@@ -219,17 +231,17 @@ uncheckedCons h hs = assert
     (Tree 1 (1 + size hs) h hs empty)
 
 -- | Take the lowest @n@ elements in ascending order of the 'Heap' (according
--- to the 'HeapPolicy').
+-- to the involved 'HeapPolicy').
 take :: (HeapPolicy p a) => Int -> Heap p a -> [a]
 take n = fst . (splitAt n)
 
--- | Remove the lowest (according to the 'HeapPolicy') @n@ elements
+-- | Remove the lowest (according to the involved 'HeapPolicy') @n@ elements
 -- from the 'Heap'.
 drop :: (HeapPolicy p a) => Int -> Heap p a -> Heap p a
 drop n = snd . (splitAt n)
 
 -- | @'splitAt' n h@ returns an ascending list of the lowest @n@ elements of @h@
--- (according to its 'HeapPolicy') and @h@, with those elements removed.
+-- (according to its involved 'HeapPolicy') and @h@, with those elements removed.
 splitAt :: (HeapPolicy p a) => Int -> Heap p a -> ([a], Heap p a)
 splitAt n heap
     | n > 0     = case view heap of
@@ -238,7 +250,7 @@ splitAt n heap
     | otherwise = ([], heap)
 
 -- | @'takeWhile' p h@ lists the longest prefix of elements in ascending order
--- (according to its 'HeapPolicy') of @h@ that satisfy @p@.
+-- (according to its involved 'HeapPolicy') of @h@ that satisfy @p@.
 takeWhile :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> [a]
 takeWhile p = fst . (span p)
 
@@ -248,8 +260,8 @@ dropWhile :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Heap p a
 dropWhile p = snd . (span p)
 
 -- | @'span' p h@ returns the longest prefix of elements in ascending order
--- (according to its 'HeapPolicy') of @h@ that satisfy @p@ and @h@, with those
--- elements removed.
+-- (according to its involved 'HeapPolicy') of @h@ that satisfy @p@ and @h@,
+-- with those elements removed.
 span :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
 span p heap = case view heap of
     Nothing      -> ([], empty)
@@ -258,8 +270,8 @@ span p heap = case view heap of
         else ([], heap)
 
 -- | @'break' p h@ returns the longest prefix of elements in ascending order
--- (according to its 'HeapPolicy') of @h@ that do /not/ satisfy @p@ and @h@,
--- with those elements removed.
+-- (according to its involved 'HeapPolicy') of @h@ that do /not/ satisfy @p@ and
+-- @h@, with those elements removed.
 break :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> ([a], Heap p a)
 break p = span (not . p)
 
@@ -273,8 +285,8 @@ union heap1@(Tree _ _ x l1 r1) heap2@(Tree _ _ y l2 r2) =
         else makeT y l2 (union r2 heap1) -- heap into the right branch, it's shorter
 
 -- | Combines a value @x@ and two 'Heap's to one 'Heap'. Therefore, @x@ has to
--- be less or equal the minima (depending on the 'HeapPolicy') of both 'Heap'
--- parameters.
+-- be less or equal the minima (depending on the involved 'HeapPolicy') of both
+-- 'Heap' parameters.
 --
 -- /The precondition is not checked/.
 makeT :: a -> Heap p a -> Heap p a -> Heap p a
@@ -333,10 +345,11 @@ toList (Tree _ _ x l r) = x : if size r < size l
     else toList l ++ toList r
 
 -- | /O(n)/. Creates a 'Heap' from an ascending 'Foldable' implementation. Note
--- that it has to be ascending corresponding to the 'HeapPolicy', not to its
--- 'Ord' instance declaration (if there is one). This function is faster than
--- 'fromFoldable' but not as fast as 'fromDescFoldable'. Note that this function
--- also works on lists, so no separate @fromAscList@ function is provided.
+-- that it has to be ascending corresponding to the involved  'HeapPolicy', not
+-- to its 'Ord' instance declaration (if there is one). This function is faster
+-- than 'fromFoldable' but not as fast as 'fromDescFoldable'. Note that this
+-- function also works on lists, so no separate @fromAscList@ function is
+-- provided.
 --
 -- /The precondition is not checked/.
 fromAscFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
@@ -344,16 +357,16 @@ fromAscFoldable = fromDescFoldable . reverse . Foldable.toList
 {-# SPECIALISE fromAscFoldable :: (HeapPolicy p a) => [a] -> Heap p a #-}
 
 -- | /O(n)/. Lists elements of the 'Heap' in ascending order (corresponding to
--- the 'HeapPolicy').
+-- the involved 'HeapPolicy').
 toAscList :: (HeapPolicy p a) => Heap p a -> [a]
 toAscList = takeWhile (const True)
 
 -- | /O(n)/. Create a 'Heap' from a descending 'Foldable' implementation. Note
--- that it has to be descending corresponding to the 'HeapPolicy', not to its
--- 'Ord' instance declaration (if there is one). This function is provided,
--- because it is faster than 'fromFoldable' and 'fromAscFoldable'. Note that
--- this function also works on lists, so no separate @fromDescList@ function is
--- provided.
+-- that it has to be descending corresponding to the involved 'HeapPolicy', not
+-- to its 'Ord' instance declaration (if there is one). This function is
+-- provided, because it is faster than 'fromFoldable' and 'fromAscFoldable'.
+-- Note that this function also works on lists, so no separate @fromDescList@
+-- function is provided.
 --
 -- /The precondition is not checked/.
 fromDescFoldable :: (HeapPolicy p a, Foldable f) => f a -> Heap p a
@@ -361,8 +374,8 @@ fromDescFoldable = foldl' (flip uncheckedCons) empty
 {-# SPECIALISE fromDescFoldable :: (HeapPolicy p a) => [a] -> Heap p a #-}
 
 -- | /O(n)/. Lists the elements on the 'Heap' in descending order (corresponding
--- to the 'HeapPolicy'). Note that this function is not especially efficient (it
--- is implemented as @'reverse' . 'toAscList'@), it is just provided as a
--- counterpart of the efficient 'fromDescFoldable' function.
+-- to the involved 'HeapPolicy'). Note that this function is not especially
+-- efficient (it is implemented as @'reverse' . 'toAscList'@), it is just
+-- provided as a counterpart of the efficient 'fromDescFoldable' function.
 toDescList :: (HeapPolicy p a) => Heap p a -> [a]
 toDescList = reverse . toAscList
