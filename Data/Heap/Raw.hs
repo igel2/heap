@@ -231,7 +231,7 @@ span f heap
         Nothing         -> ([], empty)
         Just (p, v, hs) ->
             if f p v then let (xs, heap') = span f hs in ((p, v):xs, heap')
-            else ([], heap)
+                     else ([], heap)
 
 -- | @'break' p h@ returns the longest prefix of priority-value pairs of @h@, in
 -- ascending order of priority, that do /not/ satisfy @p@ and @h@, with those
@@ -259,9 +259,8 @@ makeT p v a b = let ra = rank a
                     rb = rank b
                     s  = size a + size b + 1
                 in assert (checkPrio a && checkPrio b)
-                       $ if ra > rb
-                         then Tree (rb + 1) s p v a b
-                         else Tree (ra + 1) s p v b a
+                       $ if ra > rb then Tree (rb + 1) s p v a b
+                                    else Tree (ra + 1) s p v b a
     where checkPrio = maybe True (\(p', _, _) -> p <= p') . view
 {-# INLINE makeT #-}
 

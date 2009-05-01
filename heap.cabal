@@ -30,9 +30,9 @@ Library
   GHC-Options:       -Wall -fwarn-tabs -Werror
   Extensions:
       CPP
-    , EmptyDataDecls
+--    , EmptyDataDecls
     , DeriveDataTypeable
-    , FlexibleInstances
-    , MultiParamTypeClasses
+--    , FlexibleInstances
+--    , MultiParamTypeClasses
     , ScopedTypeVariables
 
