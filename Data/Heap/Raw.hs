@@ -1,5 +1,5 @@
---{-# LANGUAGE CPP, DeriveDataTypeable, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables #-}
---
+{-# LANGUAGE CPP, DeriveDataTypeable, ScopedTypeVariables #-}
+
 ---- | A flexible implementation of min-, max- and custom-priority heaps based on
 ---- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 ---- Structures\", Cambridge University Press, 1998, chapter 3.1.
@@ -26,7 +26,7 @@ module Data.Heap.Raw
       Heap
 #endif
       -- * Query
-    , isEmpty, size, view
+    , isEmpty, size, view, viewHead, viewTail
 --      -- ** Unsafe queries
 --    , unsafeHead, unsafeTail, unsafeUncons
       -- * Construction
@@ -126,6 +126,16 @@ view :: (Ord prio) => Heap prio val -> Maybe (prio, val, Heap prio val)
 view Empty = Nothing
 view heap  = Just (_priority heap, _value heap, union (_left heap) (_right heap))
 {-# INLINE view #-}
+
+-- | /O(1)/. Find the priority-value pair with minimal priority on the 'Heap'. If
+-- the 'Heap' is empty, 'Nothing' is returned.
+viewHead :: (Ord prio) => Heap prio val -> Maybe (prio, val)
+viewHead = fmap (\(p, v, _) -> (p, v)) . view
+
+-- | /O(log n)/. Remove the priority-value pair with minimal priority from the
+-- 'Heap'. If the 'Heap' is empty, 'Nothing' is returned.
+viewTail :: (Ord prio) => Heap prio val -> Maybe (Heap prio val)
+viewTail = fmap (\(_, _, h) -> h) . view
 
 -- TODO: unsafeXY functions? Rename them, anyway...
 ---- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
