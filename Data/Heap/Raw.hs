@@ -47,14 +47,14 @@ module Data.Heap.Raw
 
 import Control.Exception ( assert )
 import Data.Binary ( Binary(..) )
-import Data.Foldable ( Foldable, foldl' )
+import Data.Foldable ( Foldable(..), foldl' )
 import qualified Data.Foldable as Foldable ( toList )
 import Data.List ( sortBy )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
 import Data.Typeable ( Typeable )
 import Prelude hiding
-    ( break, drop, dropWhile, filter, span, splitAt, take, takeWhile )
+    ( break, drop, dropWhile, filter, foldl, span, splitAt, take, takeWhile )
 
 -- | The basic 'Heap' type. It stores priority-value pairs @(prio, val)@ and
 -- always keeps the pair with minimal priority on top. The value associated to
@@ -97,7 +97,10 @@ instance Functor (Heap prio) where
                         , _right = fmap f (_right heap)
                         }
 
--- TODO: instance Foldable (Heap prio) where -- ?
+instance (Ord prio) => Foldable (Heap prio) where
+    foldMap f = foldMap f . fmap snd . toAscList
+    foldr f z = foldl (flip f) z . fmap snd . toDescList
+    foldl f z = foldl f z . fmap snd . toAscList
 
 instance (Binary prio, Binary val, Ord prio) => Binary (Heap prio val) where
 -- TODO: evtl direkt implementieren? schneller?
@@ -162,14 +165,13 @@ empty = Empty
 
 -- | /O(1)/. Create a singleton 'Heap'.
 singleton :: prio -> val -> Heap prio val
-singleton p v = Tree
-                { _rank     = 1
-                , _size     = 1
-                , _priority = p
-                , _value    = v
-                , _left     = empty
-                , _right    = empty
-                }
+singleton p v = Tree { _rank     = 1
+                     , _size     = 1
+                     , _priority = p
+                     , _value    = v
+                     , _left     = empty
+                     , _right    = empty
+                     }
 
 -- | /O(log n)/. Insert a priority-value pair in the 'Heap'.
 insert :: (Ord prio) => prio -> val -> Heap prio val -> Heap prio val
