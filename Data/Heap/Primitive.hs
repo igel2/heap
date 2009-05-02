@@ -1,24 +1,18 @@
 {-# LANGUAGE CPP, DeriveDataTypeable, ScopedTypeVariables #-}
 
----- | A flexible implementation of min-, max- and custom-priority heaps based on
----- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
----- Structures\", Cambridge University Press, 1998, chapter 3.1.
-----
----- There are different flavours of 'Heap's, each of them following a different
----- strategy when ordering its elements:
-----
-----  * Choose 'MinHeap' or 'MaxHeap' if you need a simple minimum or maximum heap
-----    (which always keeps the minimum/maximum element at the head of the 'Heap').
-----
-----  * If you wish to manually annotate a value with a priority, e. g. an @IO ()@
-----    action with an 'Int' use 'MinPrioHeap' or 'MaxPrioHeap'. They manage
-----    @(priority, value)@ tuples so that only the priority (and not the value)
-----    influences the order of elements.
-----
-----  * If you still need something different, define a custom order for the heap
-----    elements by implementing a 'HeapPolicy' and let the maintainer know,
-----    what's missing.
-module Data.Heap.Raw
+-- | This module provides a simple leftist-heap implementation based on Chris
+-- Okasaki's book \"Purely Functional Data Structures\", Cambridge University
+-- Press, 1998, chapter 3.1.
+--
+-- A @'Heap' prio val@ associates a priority @prio@ to a value @val@. A
+-- priority-value pair with minimum priority will always be the head of the
+-- 'Heap', so this module provides minimum priority heaps. Note that the value
+-- associated to the priority has no influence on the ordering of elements, only
+-- the priority does.
+--
+-- The "Data.Heap" module provides a much more convenient 'Heap' access, so you
+-- probably want to use it instead of using this module directly.
+module Data.Heap.Primitive
     ( -- * A basic heap type
 #ifdef __DEBUG__
       Heap(..), rank
@@ -103,7 +97,6 @@ instance (Ord prio) => Foldable (Heap prio) where
     foldl f z = foldl f z . fmap snd . toAscList
 
 instance (Binary prio, Binary val, Ord prio) => Binary (Heap prio val) where
--- TODO: evtl direkt implementieren? schneller?
     put = put . toDescList
     get = fmap (fromDescFoldable :: [(prio, val)] -> Heap prio val) get
 
@@ -225,7 +218,8 @@ dropWhile f = snd . (span f)
 -- | @'span' p h@ returns the longest prefix of priority-value pairs of @h@, in
 -- ascending order of priority, that satisfy @p@ and @h@, with those elements
 -- removed.
-span :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> ([(prio, val)], Heap prio val)
+span :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val
+     -> ([(prio, val)], Heap prio val)
 span f heap
     = case view heap of
         Nothing         -> ([], empty)
@@ -236,7 +230,8 @@ span f heap
 -- | @'break' p h@ returns the longest prefix of priority-value pairs of @h@, in
 -- ascending order of priority, that do /not/ satisfy @p@ and @h@, with those
 -- elements removed.
-break :: (Ord prio) => (prio -> val  -> Bool) -> Heap prio val -> ([(prio, val)], Heap prio val)
+break :: (Ord prio) => (prio -> val  -> Bool) -> Heap prio val
+      -> ([(prio, val)], Heap prio val)
 break f = span (\p v -> not (f p v))
 
 -- | /O(log max(n, m))/. The union of two 'Heap's.

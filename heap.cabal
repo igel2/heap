@@ -25,8 +25,8 @@ Library
     , binary >= 0.5 && < 1
   Exposed-Modules:
       Data.Heap
-    , Data.Heap.Packed
-    , Data.Heap.Raw
+    , Data.Heap.Item
+    , Data.Heap.Primitive
   GHC-Options:       -Wall -fwarn-tabs -Werror
   Extensions:
       CPP
