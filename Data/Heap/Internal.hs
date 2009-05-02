@@ -12,7 +12,7 @@
 --
 -- The "Data.Heap" module provides a much more convenient 'Heap' access, so you
 -- probably want to use it instead of using this module directly.
-module Data.Heap.Primitive
+module Data.Heap.Internal
     ( -- * A basic heap type
 #ifdef __DEBUG__
       Heap(..), rank
