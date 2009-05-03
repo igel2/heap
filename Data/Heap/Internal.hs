@@ -22,21 +22,16 @@ module Data.Heap.Internal
       -- * Query
     , isEmpty, rank, size
       -- * Construction
-    , empty, singleton, {-insert,-} union, unions
+    , empty, singleton, union, unions
       -- * Deconstruction
-    , view --, viewHead, viewTail
+    , view
       -- * Filter
-    , partition --, filter, partition
+    , partition
       -- * Subranges
-    , splitAt --, take, drop, splitAt
-    , span --, takeWhile, dropWhile, span, break
+    , splitAt, span
       -- * Conversion
-      -- ** Foldable
-    , fromFoldable, {-fromAscFoldable,-} fromDescFoldable
-      -- ** List
---      -- | Note that there are no @fromList@ functions, because they're implied
---      -- by 'fromFoldable' and friends (@[]@ is an instance of 'Foldable').
-    , toList, toAscList --, toDescList
+    , fromFoldable, fromDescFoldable
+    , toList, toAscList
     ) where
 
 import Control.Exception ( assert )
@@ -149,11 +144,7 @@ uncheckedCons p v heap = assert (maybe True (\(p', _, _) -> p <= p') (view heap)
                               , _left     = heap
                               , _right    = empty
                               }
-{-
--- | /O(log n)/. Insert a priority-value pair in the 'Heap'.
-insert :: (Ord prio) => prio -> val -> Heap prio val -> Heap prio val
-insert p v = union (singleton p v)
--}
+
 -- | /O(log max(n, m))/. The union of two 'Heap's.
 union :: (Ord prio) => Heap prio val -> Heap prio val -> Heap prio val
 union heap  Empty = heap
@@ -198,20 +189,6 @@ view :: (Ord prio) => Heap prio val -> Maybe (prio, val, Heap prio val)
 view Empty = Nothing
 view heap  = Just (_priority heap, _value heap, union (_left heap) (_right heap))
 {-# INLINE view #-}
-{-
--- | /O(1)/. Find the priority-value pair with minimal priority on the 'Heap'. If
--- the 'Heap' is empty, 'Nothing' is returned.
-viewHead :: (Ord prio) => Heap prio val -> Maybe (prio, val)
-viewHead = fmap (\(p, v, _) -> (p, v)) . view
-
--- | /O(log n)/. Remove the priority-value pair with minimal priority from the
--- 'Heap'. If the 'Heap' is empty, 'Nothing' is returned.
-viewTail :: (Ord prio) => Heap prio val -> Maybe (Heap prio val)
-viewTail = fmap (\(_, _, h) -> h) . view
--}
----- | Removes all priority-value pairs from a 'Heap' not fulfilling a predicate.
---filter :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> Heap prio val
---filter f = fst . (partition f)
 
 -- | Partition the 'Heap' into two. @'partition' p h = (h1, h2)@: All
 -- priority-value pairs in @h1@ fulfil the predicate @p@, those in @h2@ don't.
@@ -225,17 +202,7 @@ partition f heap
           v        = _value heap
           (l1, l2) = partition f (_left heap)
           (r1, r2) = partition f (_right heap)
-{-
--- | Take the lowest @n@ priority-value pairs, in ascending order of priority,
--- from the 'Heap'.
-take :: (Ord prio) => Int -> Heap prio val -> [(prio, val)]
-take n = fst . (splitAt n)
 
--- | Remove the lowest @n@ priority-value pairs, in ascending order of priority,
--- from the 'Heap'.
-drop :: (Ord prio) => Int -> Heap prio val -> Heap prio val
-drop n = snd . (splitAt n)
--}
 -- | @'splitAt' n h@ returns a list of the lowest @n@ priority-value pairs of @h@,
 -- in  ascending order of priority, and @h@, with those elements removed.
 splitAt :: (Ord prio) => Int -> Heap prio val -> ([(prio, val)], Heap prio val)
@@ -245,17 +212,7 @@ splitAt n heap
                     Just (p, v, hs) -> let (xs, heap') = splitAt (n-1) hs
                                        in ((p, v) : xs, heap')
     | otherwise = ([], heap)
-{-
--- | @'takeWhile' p h@ lists the longest prefix of priority-value pairs of @h@,
--- in ascending order of priority, that satisfy @p@.
-takeWhile :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> [(prio, val)]
-takeWhile f = fst . (span f)
 
--- | @'dropWhile' p h@ removes the longest prefix of priority-value pairs of @h@
--- in ascending order of priority that satisfy @p@.
-dropWhile :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> Heap prio val
-dropWhile f = snd . (span f)
--}
 -- | @'span' p h@ returns the longest prefix of priority-value pairs of @h@, in
 -- ascending order of priority, that satisfy @p@ and @h@, with those elements
 -- removed.
@@ -267,14 +224,7 @@ span f heap
         Just (p, v, hs) ->
             if f p v then let (xs, heap') = span f hs in ((p, v):xs, heap')
                      else ([], heap)
-{-
--- | @'break' p h@ returns the longest prefix of priority-value pairs of @h@, in
--- ascending order of priority, that do /not/ satisfy @p@ and @h@, with those
--- elements removed.
-break :: (Ord prio) => (prio -> val  -> Bool) -> Heap prio val
-      -> ([(prio, val)], Heap prio val)
-break f = span (\p v -> not (f p v))
--}
+
 -- | /O(n log n)/. Builds a 'Heap' from the given priority-value pairs. Assuming
 -- you have a sorted 'Foldable', you probably want to use 'fromDescFoldable' or
 -- 'fromAscFoldable', they are faster than this function.
@@ -293,16 +243,7 @@ toList heap  = let left  = _left heap
                in (_priority heap, _value heap) : if (size right) < (size left)
                                                   then toList right ++ toList left
                                                   else toList left  ++ toList right
-{-
--- | /O(n)/. Creates a 'Heap' from a 'Foldable' providing its priority-value
--- pairs in ascending sorted order of priority. This function is faster than
--- 'fromFoldable' but not as fast as 'fromDescFoldable'.
---
--- /The precondition is not checked/.
-fromAscFoldable :: (Foldable f, Ord prio) => f (prio, val) -> Heap prio val
-fromAscFoldable = fromDescFoldable . reverse . Foldable.toList
-{-# SPECIALISE fromAscFoldable :: (Ord prio) => [(prio, val)] -> Heap prio val #-}
--}
+
 -- | /O(n)/. Lists priority-value pairs of the 'Heap' in ascending order of
 -- priority.
 toAscList :: (Ord prio) => Heap prio val -> [(prio, val)]
@@ -316,10 +257,3 @@ toAscList = fst . span (\_ _ -> True)
 fromDescFoldable :: (Foldable f, Ord prio) => f (prio, val) -> Heap prio val
 fromDescFoldable = foldl' (\h (p, v) -> uncheckedCons p v h) empty
 {-# SPECIALISE fromDescFoldable :: (Ord prio) => [(prio, val)] -> Heap prio val #-}
-{-
--- | /O(n)/. Lists the priority-value pairs of the 'Heap' in descending order of
--- priority. Note that this function is not especially efficient (it is
--- implemented as @'reverse' . 'toAscList'@), it is provided as a counterpart of
--- the efficient 'fromDescFoldable' function.
-toDescList :: (Ord prio) => Heap prio val -> [(prio, val)]
-toDescList = reverse . toAscList-}
