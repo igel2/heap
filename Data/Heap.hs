@@ -23,9 +23,9 @@ module Data.Heap
       Heap, MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
     , HeapItem(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
       -- * Construction
-    , empty, singleton, insert, union, unions
+    , I.empty, singleton, insert, I.union, I.unions
       -- * Query
-    , isEmpty, size, view, viewHead, viewTail
+    , I.isEmpty, I.size, view, viewHead, viewTail
       -- * Filter
     , filter, partition
       -- * Subranges
@@ -41,8 +41,7 @@ module Data.Heap
     ) where
 
 import Data.Heap.Item
-import Data.Heap.Internal
-    ( Heap, empty, isEmpty, union, unions, size )
+import Data.Heap.Internal ( Heap )
 import qualified Data.Heap.Internal as I
 import Prelude hiding ( splitAt )
 
@@ -51,7 +50,7 @@ singleton = (uncurry I.singleton) . split
 
 insert :: (HeapItem pol item) => item -> Heap (Prio pol item) (Val pol item)
        -> Heap (Prio pol item) (Val pol item)
-insert h = union (singleton h)
+insert h = I.union (singleton h)
 
 view :: (HeapItem pol item) => Heap (Prio pol item) (Val pol item)
      -> Maybe (item, Heap (Prio pol item) (Val pol item))
