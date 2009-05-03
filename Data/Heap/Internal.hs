@@ -15,14 +15,16 @@
 module Data.Heap.Internal
     ( -- * A basic heap type
 #ifdef __DEBUG__
-      Heap(..), rank
+      Heap(..)
 #else
       Heap
 #endif
+      -- * Query
+    , isEmpty, rank, size
       -- * Construction
     , empty, singleton, {-insert,-} union, unions
-      -- * Query
-    , isEmpty, size, view --, viewHead, viewTail
+      -- * Deconstruction
+    , view --, viewHead, viewTail
       -- * Filter
     , partition --, filter, partition
       -- * Subranges
@@ -104,6 +106,21 @@ instance (Ord prio) => Foldable (Heap prio) where
     foldr f z = foldl (flip f) z . fmap snd . reverse . toAscList
     foldl f z = foldl f z . fmap snd . toAscList
 
+-- | /O(1)/. Is the 'Heap' empty?
+isEmpty :: Heap prio val -> Bool
+isEmpty Empty = True
+isEmpty _     = False
+
+-- | /O(1)/. Find the rank of a 'Heap', which is the length of its right spine.
+rank :: Heap prio val -> Int
+rank Empty = 0
+rank heap  = _rank heap
+
+-- | /O(1)/. The total number of elements in the 'Heap'.
+size :: Heap prio val -> Int
+size Empty = 0
+size heap  = _size heap
+
 -- | /O(1)/. Constructs an empty 'Heap'.
 empty :: Heap prio val
 empty = Empty
@@ -173,21 +190,6 @@ unions heaps = case tournamentFold' heaps of
     tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
     tournamentFold' xs         = xs
     {-# INLINE tournamentFold' #-}
-
--- | /O(1)/. Is the 'Heap' empty?
-isEmpty :: Heap prio val -> Bool
-isEmpty Empty = True
-isEmpty _     = False
-
--- | /O(1)/. Find the rank of a 'Heap', which is the length of its right spine.
-rank :: Heap prio val -> Int
-rank Empty = 0
-rank heap  = _rank heap
-
--- | /O(1)/. The total number of elements in the 'Heap'.
-size :: Heap prio val -> Int
-size Empty = 0
-size heap  = _size heap
 
 -- | /O(log n)/ for the tail, /O(1)/ for the head. Find the priority-value pair
 -- with minimal priority and delete it from the 'Heap' (i. e. find head and tail

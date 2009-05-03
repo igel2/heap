@@ -9,29 +9,24 @@ import Data.Binary ( Binary )
 import Data.Heap.Internal ( Heap )
 import Text.Read ( Read(..) )
 
-type MinHeap a = Heap (Prio MinPolicy a) (Val MinPolicy a)
-type MaxHeap a = Heap (Prio MaxPolicy a) (Val MaxPolicy a)
-type MinPrioHeap prio val = Heap (Prio FstMinPolicy (prio, val)) (Val FstMinPolicy (prio, val))
-type MaxPrioHeap prio val = Heap (Prio FstMaxPolicy (prio, val)) (Val FstMaxPolicy (prio, val))
-
---import Data.Heap.Raw as Raw
+--TODO: does this make D.H less verbosed *and* more simple?
+type ManagedHeap pol item = Heap (Prio pol item) (Val pol item)
 
 ---- | A 'Heap' which will always extract the minimum first.
---type MinHeap a = Heap (Priority MinPolicy a) (Value MinPolicy a)
+type MinHeap a = Heap (Prio MinPolicy a) (Val MinPolicy a)
 --
 ---- | A 'Heap' which will always extract the maximum first.
---type MaxHeap a = Heap (Priority MaxPolicy a) (Value MaxPolicy a)
+type MaxHeap a = Heap (Prio MaxPolicy a) (Val MaxPolicy a)
 --
 ---- | A 'Heap' storing priority-value-associations. It only regards the priority
 ---- for determining the order of elements, the tuple with minimal 'fst' value
 ---- (i. e. priority) will always be the head of the 'Heap'.
---type MinPrioHeap priority value = Heap FstMinPolicy (priority, value)
+type MinPrioHeap prio val = Heap (Prio FstMinPolicy (prio, val)) (Val FstMinPolicy (prio, val))
 --
 ---- | A 'Heap' storing priority-value-associations. It only regards the priority
 ---- for determining the order of elements, the tuple with maximal 'fst' value
 ---- (i. e. priority) will always be the head of the 'Heap'.
---type MaxPrioHeap priority value = Heap FstMaxPolicy (priority, value)
-
+type MaxPrioHeap prio val = Heap (Prio FstMaxPolicy (prio, val)) (Val FstMaxPolicy (prio, val))
 
 ---- | The 'HeapPolicy' class defines an order on the elements contained within
 ---- a 'Heap'.
