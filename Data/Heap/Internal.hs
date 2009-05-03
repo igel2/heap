@@ -47,6 +47,7 @@ import Data.Ord ( comparing )
 import Data.Typeable ( Typeable )
 import Prelude hiding
     ( break, drop, dropWhile, filter, foldl, span, splitAt, take, takeWhile )
+import Text.Read ( Lexeme(..), Read(..), lexP, parens, prec, readListPrecDefault )
 
 -- | The basic 'Heap' type. It stores priority-value pairs @(prio, val)@ and
 -- always keeps the pair with minimal priority on top. The value associated to
@@ -63,10 +64,11 @@ data Heap prio val
     deriving ( Typeable )
 
 instance (Read prio, Read val, Ord prio) => Read (Heap prio val) where
-    readsPrec p = readParen (p > 10) $ \r -> do
-      ("fromList", s) <- lex r
-      (xs, t)         <- reads s
-      return ((fromFoldable :: [(prio, val)] -> Heap prio val) xs, t)
+    readPrec = parens $ prec 10 $ do
+      Ident "fromList" <- lexP
+      xs               <- readPrec
+      return ((fromFoldable :: [(prio, val)] -> Heap prio val) xs)
+    readListPrec = readListPrecDefault
 
 instance (Show prio, Show val) => Show (Heap prio val) where
     show = ("fromList " ++) . show . toList

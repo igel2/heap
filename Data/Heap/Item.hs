@@ -86,7 +86,7 @@ instance (Ord a) => HeapItem MinPolicy a where
     merge2 (MinP x, _) = x
 
 instance (Read a) => Read (Prio MinPolicy a) where
-    readPrec = fmap MinP readPrec
+    readPrec     = fmap MinP readPrec
     readListPrec = fmap (fmap MinP) readListPrec
 
 instance (Show a) => Show (Prio MinPolicy a) where
@@ -106,7 +106,7 @@ instance (Ord a) => Ord (Prio MaxPolicy a) where
     compare (MaxP x) (MaxP y) = compare y x
 
 instance (Read a) => Read (Prio MaxPolicy a) where
-    readPrec = fmap MaxP readPrec
+    readPrec     = fmap MaxP readPrec
     readListPrec = fmap (fmap MaxP) readListPrec
 
 instance (Show a) => Show (Prio MaxPolicy a) where
@@ -123,7 +123,7 @@ instance (Ord prio) => HeapItem FstMinPolicy (prio, val) where
     merge2 (FMinP p, v) = (p,       v)
 
 instance (Read prio) => Read (Prio FstMinPolicy (prio, val)) where
-    readPrec = fmap FMinP readPrec
+    readPrec     = fmap FMinP readPrec
     readListPrec = fmap (fmap FMinP) readListPrec
 
 instance (Show prio) => Show (Prio FstMinPolicy (prio, val)) where
@@ -143,7 +143,7 @@ instance (Ord prio) => Ord (Prio FstMaxPolicy (prio, val)) where
     compare (FMaxP x) (FMaxP y) = compare y x
 
 instance (Read prio) => Read (Prio FstMaxPolicy (prio, val)) where
-    readPrec = fmap FMaxP readPrec
+    readPrec     = fmap FMaxP readPrec
     readListPrec = fmap (fmap FMaxP) readListPrec
 
 instance (Show prio) => Show (Prio FstMaxPolicy (prio, val)) where
