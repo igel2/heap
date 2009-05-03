@@ -246,22 +246,6 @@ fromFoldable xs = let
 {-# INLINE fromFoldable #-}
 {-# SPECIALISE fromFoldable :: (Ord prio) => [(prio, val)] -> Heap prio val #-}
 
--- | /O(n)/. Lists all priority-value pairs of the 'Heap' in no specific order.
-toList :: Heap prio val -> [(prio, val)]
-toList Empty = []
-toList heap  = let left  = _left heap
-                   right = _right heap
-               in (_priority heap, _value heap) : if (size right) < (size left)
-                                                  then toList right ++ toList left
-                                                  else toList left  ++ toList right
-{-# INLINE toList #-}
-
--- | /O(n)/. Lists priority-value pairs of the 'Heap' in ascending order of
--- priority.
-toAscList :: (Ord prio) => Heap prio val -> [(prio, val)]
-toAscList = fst . span (\_ _ -> True)
-{-# INLINE toAscList #-}
-
 -- | /O(n)/. Create a 'Heap' from a 'Foldable' providing its priority-value pairs
 -- in descending order of priority. Prefer this function over 'fromFoldable' and
 -- 'fromAscFoldable', as it is faster.
@@ -271,3 +255,20 @@ fromDescFoldable :: (Foldable f, Ord prio) => f (prio, val) -> Heap prio val
 fromDescFoldable = foldl' (\h (p, v) -> uncheckedCons p v h) empty
 {-# INLINE fromDescFoldable #-}
 {-# SPECIALISE fromDescFoldable :: (Ord prio) => [(prio, val)] -> Heap prio val #-}
+
+-- | /O(n log n)/. Lists all priority-value pairs of the 'Heap' in no specific
+-- order.
+toList :: Heap prio val -> [(prio, val)]
+toList Empty = []
+toList heap  = let left  = _left heap
+                   right = _right heap
+               in (_priority heap, _value heap) : if (size right) < (size left)
+                                                  then toList right ++ toList left
+                                                  else toList left  ++ toList right
+{-# INLINE toList #-}
+
+-- | /O(n log n)/. Lists priority-value pairs of the 'Heap' in ascending order of
+-- priority.
+toAscList :: (Ord prio) => Heap prio val -> [(prio, val)]
+toAscList = fst . span (\_ _ -> True)
+{-# INLINE toAscList #-}

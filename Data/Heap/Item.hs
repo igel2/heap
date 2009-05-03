@@ -38,7 +38,7 @@ type MaxPrioHeap prio val = Heap (Prio FstMaxPolicy (prio, val)) (Val FstMaxPoli
 ---- this one:
 ----
 ---- @
----- let h1 = 'fromFoldable' [1..10] :: MinHeap Int
+--- let h1 = 'fromFoldable' [1..10] :: MinHeap Int
 ----     h2 = 'fromFoldable' [1..10] :: MaxHeap Int
 ----     h3 = 'union' h1 h2 -- we can't form the union of a Min- and a 'MaxHeap'
 ---- @
@@ -69,6 +69,11 @@ class (Ord (Prio pol item)) => HeapItem pol item where
 merge :: (HeapItem pol item) => Prio pol item -> Val pol item -> item
 merge = curry merge2
 {-# INLINE merge #-}
+
+-- TODO: rename: liftXY, morph, whatever
+translate :: (HeapItem pol item) => (item -> a) -> Prio pol item -> Val pol item -> a
+translate f p v = let x = merge p v in f x
+{-# INLINE translate #-}
 
 ---- | Policy type for a 'MinHeap'.
 data MinPolicy
