@@ -18,17 +18,33 @@
 ----  * If you still need something different, define a custom order for the heap
 ----    elements by implementing a 'HeapPolicy' and let the maintainer know,
 ----    what's missing.
-module Data.Heap where
---    ( -- module Data.Heap.Packed
---    ) where
+module Data.Heap
+    ( -- * Heap flavours
+      Heap, MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
+    , HeapItem(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
+      -- * Construction
+    , empty, singleton, insert, union, unions
+      -- * Query
+    , isEmpty, size, view, viewHead, viewTail
+      -- * Filter
+    , filter, partition
+      -- * Subranges
+    , take, drop, splitAt
+    , takeWhile, dropWhile, span, break
+      -- * Conversion
+      -- ** Foldable
+--    , fromFoldable, fromAscFoldable, fromDescFoldable
+--      -- ** List
+--      -- | Note that there are no @fromList@ functions, because they're implied
+--      -- by 'fromFoldable' and friends (we have @instance Foldable []@).
+--    , toList, toAscList, toDescList
+    ) where
 
 import Data.Heap.Item
-import Data.Heap.Internal ( Heap, union )
+import Data.Heap.Internal
+    ( Heap, empty, isEmpty, union, unions, size )
 import qualified Data.Heap.Internal as I
-
-view :: (HeapItem pol item) => Heap (Prio pol item) (Val pol item)
-     -> Maybe (item, Heap (Prio pol item) (Val pol item))
-view = fmap (\(p, v, h) -> (merge p v, h)) . I.view
+import Prelude hiding ( splitAt )
 
 singleton :: (HeapItem pol item) => item -> Heap (Prio pol item) (Val pol item)
 singleton = (uncurry I.singleton) . split
@@ -36,6 +52,18 @@ singleton = (uncurry I.singleton) . split
 insert :: (HeapItem pol item) => item -> Heap (Prio pol item) (Val pol item)
        -> Heap (Prio pol item) (Val pol item)
 insert h = union (singleton h)
+
+view :: (HeapItem pol item) => Heap (Prio pol item) (Val pol item)
+     -> Maybe (item, Heap (Prio pol item) (Val pol item))
+view = fmap (\(p, v, h) -> (merge p v, h)) . I.view
+
+viewHead :: (HeapItem pol item) => Heap (Prio pol item) (Val pol item)
+         -> Maybe item
+viewHead = fmap fst . view
+
+viewTail :: (HeapItem pol item) => Heap (Prio pol item) (Val pol item)
+         -> Maybe (Heap (Prio pol item) (Val pol item))
+viewTail = fmap snd . view
 
 splitAt :: (HeapItem pol item) => Int -> Heap (Prio pol item) (Val pol item)
         -> ([item], Heap (Prio pol item) (Val pol item))

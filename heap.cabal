@@ -27,7 +27,7 @@ Library
       Data.Heap
     , Data.Heap.Internal
     , Data.Heap.Item
-  GHC-Options:       -Wall -fwarn-tabs -Werror
+  GHC-Options:       -Wall -fwarn-tabs
   Extensions:
       CPP
 --    , EmptyDataDecls

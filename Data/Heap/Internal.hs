@@ -19,12 +19,10 @@ module Data.Heap.Internal
 #else
       Heap
 #endif
-      -- * Query
-    , isEmpty, size, view, viewHead, viewTail
---      -- ** Unsafe queries
---    , unsafeHead, unsafeTail, unsafeUncons
       -- * Construction
     , empty, singleton, insert, union, unions
+      -- * Query
+    , isEmpty, size, view, viewHead, viewTail
       -- * Filter
     , filter, partition
       -- * Subranges
@@ -64,20 +62,24 @@ data Heap prio val
            } -- ^ A tree node of a non-empty 'Heap'.
     deriving ( Typeable )
 
-instance (Show prio, Show val) => Show (Heap prio val) where
-    show = ("fromList " ++) . show . toList
-
 instance (Read prio, Read val, Ord prio) => Read (Heap prio val) where
     readsPrec p = readParen (p > 10) $ \r -> do
       ("fromList", s) <- lex r
       (xs, t)         <- reads s
       return ((fromFoldable :: [(prio, val)] -> Heap prio val) xs, t)
 
+instance (Show prio, Show val) => Show (Heap prio val) where
+    show = ("fromList " ++) . show . toList
+
 instance (Ord prio, Ord val) => Eq (Heap prio val) where
     heap1 == heap2 = EQ == compare heap1 heap2
 
 instance (Ord prio, Ord val) => Ord (Heap prio val) where
     compare = comparing toAscList
+
+instance (Binary prio, Binary val, Ord prio) => Binary (Heap prio val) where
+    put = put . toDescList
+    get = fmap (fromDescFoldable :: [(prio, val)] -> Heap prio val) get
 
 instance (Ord prio) => Monoid (Heap prio val) where
     mempty  = empty
@@ -95,43 +97,6 @@ instance (Ord prio) => Foldable (Heap prio) where
     foldMap f = foldMap f . fmap snd . toAscList
     foldr f z = foldl (flip f) z . fmap snd . toDescList
     foldl f z = foldl f z . fmap snd . toAscList
-
-instance (Binary prio, Binary val, Ord prio) => Binary (Heap prio val) where
-    put = put . toDescList
-    get = fmap (fromDescFoldable :: [(prio, val)] -> Heap prio val) get
-
--- | /O(1)/. Is the 'Heap' empty?
-isEmpty :: Heap prio val -> Bool
-isEmpty Empty = True
-isEmpty _     = False
-
--- | /O(1)/. Find the rank of a 'Heap', which is the length of its right spine.
-rank :: Heap prio val -> Int
-rank Empty = 0
-rank heap  = _rank heap
-
--- | /O(1)/. The total number of elements in the 'Heap'.
-size :: Heap prio val -> Int
-size Empty = 0
-size heap  = _size heap
-
--- | /O(log n)/ for the tail, /O(1)/ for the head. Find the priority-value pair
--- with minimal priority and delete it from the 'Heap' (i. e. find head and tail
--- of the heap) if it is not empty. Otherwise, 'Nothing' is returned.
-view :: (Ord prio) => Heap prio val -> Maybe (prio, val, Heap prio val)
-view Empty = Nothing
-view heap  = Just (_priority heap, _value heap, union (_left heap) (_right heap))
-{-# INLINE view #-}
-
--- | /O(1)/. Find the priority-value pair with minimal priority on the 'Heap'. If
--- the 'Heap' is empty, 'Nothing' is returned.
-viewHead :: (Ord prio) => Heap prio val -> Maybe (prio, val)
-viewHead = fmap (\(p, v, _) -> (p, v)) . view
-
--- | /O(log n)/. Remove the priority-value pair with minimal priority from the
--- 'Heap'. If the 'Heap' is empty, 'Nothing' is returned.
-viewTail :: (Ord prio) => Heap prio val -> Maybe (Heap prio val)
-viewTail = fmap (\(_, _, h) -> h) . view
 
 -- TODO: unsafeXY functions? Rename them, anyway...
 ---- | /O(1)/. Returns the first item of the 'Heap', according to its 'HeapPolicy'.
@@ -166,10 +131,6 @@ singleton p v = Tree { _rank     = 1
                      , _right    = empty
                      }
 
--- | /O(log n)/. Insert a priority-value pair in the 'Heap'.
-insert :: (Ord prio) => prio -> val -> Heap prio val -> Heap prio val
-insert p v = union (singleton p v)
-
 -- | /O(1)/. Insert an priority-value pair into the 'Heap', whose /priority is
 -- less or equal/ to all other priorities on the 'Heap', i. e. a pair that is a
 -- valid head of the 'Heap'.
@@ -184,6 +145,97 @@ uncheckedCons p v heap = assert (maybe True (\(p', _, _) -> p <= p') (view heap)
                               , _left     = heap
                               , _right    = empty
                               }
+
+-- | /O(log n)/. Insert a priority-value pair in the 'Heap'.
+insert :: (Ord prio) => prio -> val -> Heap prio val -> Heap prio val
+insert p v = union (singleton p v)
+
+-- | /O(log max(n, m))/. The union of two 'Heap's.
+union :: (Ord prio) => Heap prio val -> Heap prio val -> Heap prio val
+union heap  Empty = heap
+union Empty heap  = heap
+union heap1 heap2 = let p1 = _priority heap1
+                        p2 = _priority heap2
+                    in if p1 < p2
+    then makeT p1 (_value heap1) (_left heap1) (union (_right heap1) heap2)
+    else makeT p2 (_value heap2) (_left heap2) (union (_right heap2) heap1)
+
+-- | Builds a 'Heap' from a priority, a value and two more 'Heap's. Therefore,
+-- the /priority has to be less or equal/ than all priorities in both 'Heap'
+-- parameters.
+--
+-- /The precondition is not checked/.
+makeT :: (Ord prio) => prio -> val -> Heap prio val -> Heap prio val -> Heap prio val
+makeT p v a b = let ra = rank a
+                    rb = rank b
+                    s  = size a + size b + 1
+                in assert (checkPrio a && checkPrio b)
+                       $ if ra > rb then Tree (rb + 1) s p v a b
+                                    else Tree (ra + 1) s p v b a
+    where checkPrio = maybe True (\(p', _, _) -> p <= p') . view
+{-# INLINE makeT #-}
+
+-- | Builds the union over all given 'Heap's.
+unions :: (Ord prio) => [Heap prio val] -> Heap prio val
+unions heaps = case tournamentFold' heaps of
+    []  -> empty
+    [h] -> h
+    hs  -> unions hs
+    where
+    tournamentFold' :: (Monoid m) => [m] -> [m]
+    tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
+    tournamentFold' xs         = xs
+    {-# INLINE tournamentFold' #-}
+
+-- | /O(1)/. Is the 'Heap' empty?
+isEmpty :: Heap prio val -> Bool
+isEmpty Empty = True
+isEmpty _     = False
+
+-- | /O(1)/. Find the rank of a 'Heap', which is the length of its right spine.
+rank :: Heap prio val -> Int
+rank Empty = 0
+rank heap  = _rank heap
+
+-- | /O(1)/. The total number of elements in the 'Heap'.
+size :: Heap prio val -> Int
+size Empty = 0
+size heap  = _size heap
+
+-- | /O(log n)/ for the tail, /O(1)/ for the head. Find the priority-value pair
+-- with minimal priority and delete it from the 'Heap' (i. e. find head and tail
+-- of the heap) if it is not empty. Otherwise, 'Nothing' is returned.
+view :: (Ord prio) => Heap prio val -> Maybe (prio, val, Heap prio val)
+view Empty = Nothing
+view heap  = Just (_priority heap, _value heap, union (_left heap) (_right heap))
+{-# INLINE view #-}
+
+-- | /O(1)/. Find the priority-value pair with minimal priority on the 'Heap'. If
+-- the 'Heap' is empty, 'Nothing' is returned.
+viewHead :: (Ord prio) => Heap prio val -> Maybe (prio, val)
+viewHead = fmap (\(p, v, _) -> (p, v)) . view
+
+-- | /O(log n)/. Remove the priority-value pair with minimal priority from the
+-- 'Heap'. If the 'Heap' is empty, 'Nothing' is returned.
+viewTail :: (Ord prio) => Heap prio val -> Maybe (Heap prio val)
+viewTail = fmap (\(_, _, h) -> h) . view
+
+-- | Removes all priority-value pairs from a 'Heap' not fulfilling a predicate.
+filter :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> Heap prio val
+filter f = fst . (partition f)
+
+-- | Partition the 'Heap' into two. @'partition' p h = (h1, h2)@: All
+-- priority-value pairs in @h1@ fulfil the predicate @p@, those in @h2@ don't.
+-- @'union' h1 h2 = h@.
+partition :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> (Heap prio val, Heap prio val)
+partition _ Empty  = (empty, empty)
+partition f heap
+    | f p v     = (makeT p v l1 r1, union l2 r2)
+    | otherwise = (union l1 r1, makeT p v l2 r2)
+    where p        = _priority heap
+          v        = _value heap
+          (l1, l2) = partition f (_left heap)
+          (r1, r2) = partition f (_right heap)
 
 -- | Take the lowest @n@ priority-value pairs, in ascending order of priority,
 -- from the 'Heap'.
@@ -233,60 +285,6 @@ span f heap
 break :: (Ord prio) => (prio -> val  -> Bool) -> Heap prio val
       -> ([(prio, val)], Heap prio val)
 break f = span (\p v -> not (f p v))
-
--- | /O(log max(n, m))/. The union of two 'Heap's.
-union :: (Ord prio) => Heap prio val -> Heap prio val -> Heap prio val
-union heap  Empty = heap
-union Empty heap  = heap
-union heap1 heap2 = let p1 = _priority heap1
-                        p2 = _priority heap2
-                    in if p1 < p2
-    then makeT p1 (_value heap1) (_left heap1) (union (_right heap1) heap2)
-    else makeT p2 (_value heap2) (_left heap2) (union (_right heap2) heap1)
-
--- | Builds a 'Heap' from a priority, a value and two more 'Heap's. Therefore,
--- the /priority has to be less or equal/ than all priorities in both 'Heap'
--- parameters.
---
--- /The precondition is not checked/.
-makeT :: (Ord prio) => prio -> val -> Heap prio val -> Heap prio val -> Heap prio val
-makeT p v a b = let ra = rank a
-                    rb = rank b
-                    s  = size a + size b + 1
-                in assert (checkPrio a && checkPrio b)
-                       $ if ra > rb then Tree (rb + 1) s p v a b
-                                    else Tree (ra + 1) s p v b a
-    where checkPrio = maybe True (\(p', _, _) -> p <= p') . view
-{-# INLINE makeT #-}
-
--- | Builds the union over all given 'Heap's.
-unions :: (Ord prio) => [Heap prio val] -> Heap prio val
-unions heaps = case tournamentFold' heaps of
-    []  -> empty
-    [h] -> h
-    hs  -> unions hs
-    where
-    tournamentFold' :: (Monoid m) => [m] -> [m]
-    tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
-    tournamentFold' xs         = xs
-    {-# INLINE tournamentFold' #-}
-
--- | Removes all priority-value pairs from a 'Heap' not fulfilling a predicate.
-filter :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> Heap prio val
-filter f = fst . (partition f)
-
--- | Partition the 'Heap' into two. @'partition' p h = (h1, h2)@: All
--- priority-value pairs in @h1@ fulfil the predicate @p@, those in @h2@ don't.
--- @'union' h1 h2 = h@.
-partition :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val -> (Heap prio val, Heap prio val)
-partition _ Empty  = (empty, empty)
-partition f heap
-    | f p v     = (makeT p v l1 r1, union l2 r2)
-    | otherwise = (union l1 r1, makeT p v l2 r2)
-    where p        = _priority heap
-          v        = _value heap
-          (l1, l2) = partition f (_left heap)
-          (r1, r2) = partition f (_right heap)
 
 -- | /O(n log n)/. Builds a 'Heap' from the given priority-value pairs. Assuming
 -- you have a sorted 'Foldable', you probably want to use 'fromDescFoldable' or
