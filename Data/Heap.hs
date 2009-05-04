@@ -70,7 +70,7 @@ insert h = I.union (singleton h)
 -- of the heap) if it is not empty. Otherwise, 'Nothing' is returned.
 view :: (HeapItem pol item) => ManagedHeap pol item
      -> Maybe (item, ManagedHeap pol item)
-view = fmap (\(p, v, h) -> (merge p v, h)) . I.view
+view = fmap (\(p, v, h) -> (merge (p, v), h)) . I.view
 
 -- | /O(1)/. Find the item with minimal associated priority on the 'Heap' (i. e.
 -- its head) if it is not empty. Otherwise, 'Nothing' is returned.
@@ -92,7 +92,7 @@ filter p = fst . (partition p)
 -- @h1@ fulfil the predicate @p@, those in @h2@ don't. @'union' h1 h2 = h@.
 partition :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
           -> (ManagedHeap pol item, ManagedHeap pol item)
-partition p = I.partition (translate p)
+partition p = I.partition (splitF p)
 
 -- | Take the first @n@ items from the 'Heap'.
 take :: (HeapItem pol item) => Int -> ManagedHeap pol item -> [item]
@@ -106,7 +106,7 @@ drop n = snd . splitAt n
 -- those elements removed.
 splitAt :: (HeapItem pol item) => Int -> ManagedHeap pol item
         -> ([item], ManagedHeap pol item)
-splitAt n heap = let (xs, heap') = I.splitAt n heap in (fmap merge2 xs, heap')
+splitAt n heap = let (xs, heap') = I.splitAt n heap in (fmap merge xs, heap')
 
 -- | @'takeWhile' p h@: List the longest prefix of items in @h@ that satisfy @p@.
 takeWhile :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item -> [item]
@@ -122,7 +122,7 @@ dropWhile p = snd . (span p)
 -- @h@, with those elements removed.
 span :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
      -> ([item], ManagedHeap pol item)
-span p heap = let (xs, heap') = I.span (translate p) heap in (fmap merge2 xs, heap')
+span p heap = let (xs, heap') = I.span (splitF p) heap in (fmap merge xs, heap')
 
 -- | @'break' p h@: The longest prefix of items in @h@ that do /not/ satisfy @p@
 -- and @h@, with those elements removed.
@@ -161,11 +161,11 @@ fromDescFoldable = I.fromDescFoldable . fmap split
 
 -- | /O(n log n)/. List all items of the 'Heap' in no specific order.
 toList :: (HeapItem pol item) => ManagedHeap pol item -> [item]
-toList = fmap merge2 . I.toList
+toList = fmap merge . I.toList
 
 -- | /O(n log n)/. List the items of the 'Heap' in ascending order of priority.
 toAscList :: (HeapItem pol item) => ManagedHeap pol item -> [item]
-toAscList = fmap merge2 . I.toAscList
+toAscList = fmap merge . I.toAscList
 
 -- | /O(n log n)/. List the items of the 'Heap' in descending order of priority.
 -- Note that this function is not especially efficient (it is implemented in

@@ -55,8 +55,8 @@ type MaxPrioHeap prio val = Heap (Prio FstMaxPolicy (prio, val)) (Val FstMaxPoli
 -- instance (Ord a) => HeapItem MaxPolicy a where
 --     newtype 'Prio' 'MaxPolicy' a = MaxP a deriving ('Eq')
 --     type    'Val'  'MaxPolicy' a = ()
---     'split'  x           = (MaxP x, ())
---     'merge2' (MaxP x, _) = x
+--     'split' x           = (MaxP x, ())
+--     'merge' (MaxP x, _) = x
 --
 -- instance ('Ord' a) => 'Ord' ('Prio' 'MaxPolicy' a) where
 --     'compare' (MaxP x) (MaxP y) = 'compare' y x
@@ -66,37 +66,30 @@ type MaxPrioHeap prio val = Heap (Prio FstMaxPolicy (prio, val)) (Val FstMaxPoli
 -- actually meant (we also have 'MinPolicy' for example) and @MaxP@ inverts the
 -- ordering of @a@, so that the maximum will be on top of the 'Heap'.
 --
--- The conversion functions 'split' and 'merge2' have to make sure that
--- @forall x. 'merge2' ('split' x) == x@ (merge and split don't remove, add or
--- change any information) and @forall p v f. fst (split (merge2 (p, (f v))) ==
--- fst (split (merge2 (p, v)))@  (modifying the associated value doesn't alter
--- the priority).
+-- The conversion functions 'split' and 'merge' have to make sure that
+--
+-- (1) @forall x. 'merge' ('split' x) == x@ ('merge' and 'split' don't remove,
+--     add or alter any information)
+--
+-- (2) @forall p v f. 'fst' ('split' ('merge' (p, (f v))) == 'fst' ('split'
+--     ('merge' (p, v)))@ (modifying the associated value doesn't alter the
+--      priority)
 class (Ord (Prio pol item)) => HeapItem pol item where
     -- | The part of @item@ that determines the ordering of elements on a 'Heap'.
     data Prio pol item :: *
     -- | Everything not part of @'Prio' pol item@
     type Val  pol item :: *
 
--- id === (uncurry merge) . split
--- forall p v f. fst (split (merge p (f v)))
---            == fst (split (merge p v))
     -- | Translate an @item@ into a priority-value pair.
-    split  :: item -> (Prio pol item, Val pol item)
+    split :: item -> (Prio pol item, Val pol item)
     -- | Restore the @item@ from a priority-value pair.
-    merge2 :: (Prio pol item, Val pol item) -> item
-{-# RULES
---TODO:"merge2/split" forall x. merge2 (split x) = x
-"split/merge2" forall x. split (merge2 x) = x
-  #-}
+    merge :: (Prio pol item, Val pol item) -> item
+{-# RULES "split/merge" forall x. split (merge x) = x #-}
 
-merge :: (HeapItem pol item) => Prio pol item -> Val pol item -> item
-merge = curry merge2
-{-# INLINE merge #-}
-
--- TODO: rename: liftXY, morph, whatever
-translate :: (HeapItem pol item) => (item -> a) -> Prio pol item -> Val pol item -> a
-translate f p v = let x = merge p v in f x
-{-# INLINE translate #-}
+-- | 'split' a function on @item@s to one on priority-value pairs.
+splitF :: (HeapItem pol item) => (item -> a) -> Prio pol item -> Val pol item -> a
+splitF f p v = let x = merge (p, v) in f x
+{-# INLINE splitF #-}
 
 ---- | Policy type for a 'MinHeap'.
 data MinPolicy
@@ -105,8 +98,8 @@ instance (Ord a) => HeapItem MinPolicy a where
     newtype Prio MinPolicy a = MinP a deriving (Binary, Eq, Ord)
     type    Val  MinPolicy a = ()
 
-    split  x           = (MinP x, ())
-    merge2 (MinP x, _) = x
+    split x           = (MinP x, ())
+    merge (MinP x, _) = x
 
 instance (Read a) => Read (Prio MinPolicy a) where
     readPrec     = fmap MinP readPrec
@@ -122,8 +115,8 @@ instance (Ord a) => HeapItem MaxPolicy a where
     newtype Prio MaxPolicy a = MaxP a deriving (Binary, Eq)
     type    Val  MaxPolicy a = ()
 
-    split  x           = (MaxP x, ())
-    merge2 (MaxP x, _) = x
+    split x           = (MaxP x, ())
+    merge (MaxP x, _) = x
 
 instance (Ord a) => Ord (Prio MaxPolicy a) where
     compare (MaxP x) (MaxP y) = compare y x
@@ -142,8 +135,8 @@ instance (Ord prio) => HeapItem FstMinPolicy (prio, val) where
     newtype Prio FstMinPolicy (prio, val) = FMinP prio deriving (Binary, Eq, Ord)
     type    Val  FstMinPolicy (prio, val) = val
 
-    split  (p,       v) = (FMinP p, v)
-    merge2 (FMinP p, v) = (p,       v)
+    split (p,       v) = (FMinP p, v)
+    merge (FMinP p, v) = (p,       v)
 
 instance (Read prio) => Read (Prio FstMinPolicy (prio, val)) where
     readPrec     = fmap FMinP readPrec
@@ -159,8 +152,8 @@ instance (Ord prio) => HeapItem FstMaxPolicy (prio, val) where
     newtype Prio FstMaxPolicy (prio, val) = FMaxP prio deriving (Binary, Eq)
     type    Val  FstMaxPolicy (prio, val) = val
 
-    split  (p,       v) = (FMaxP p, v)
-    merge2 (FMaxP p, v) = (p,       v)
+    split (p,       v) = (FMaxP p, v)
+    merge (FMaxP p, v) = (p,       v)
 
 instance (Ord prio) => Ord (Prio FstMaxPolicy (prio, val)) where
     compare (FMaxP x) (FMaxP y) = compare y x
