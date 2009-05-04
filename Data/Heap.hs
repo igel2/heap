@@ -23,8 +23,7 @@ module Data.Heap
       -- ** Various heap flavours
       Heap, ManagedHeap
     , MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
---TODO rename? :
-      -- ** Ordering policies
+      -- ** Ordering strategies
     , HeapItem(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
       -- * Query
     , I.isEmpty, I.size
@@ -45,7 +44,7 @@ module Data.Heap
     , fromFoldable, fromAscFoldable, fromDescFoldable
       -- ** List
       -- | Note that there are no @fromList@ functions, because they're implied
-      -- by 'fromFoldable' and friends (we have @instance Foldable []@).
+      -- by 'fromFoldable' and friends (@instance Foldable []@).
     , toList, toAscList, toDescList
     ) where
 
@@ -84,7 +83,7 @@ viewTail :: (HeapItem pol item) => ManagedHeap pol item
          -> Maybe (ManagedHeap pol item)
 viewTail = fmap snd . view
 
--- | Removes all items from a 'Heap' not fulfilling a predicate.
+-- | Remove all items from a 'Heap' not fulfilling a predicate.
 filter :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
        -> ManagedHeap pol item
 filter p = fst . (partition p)
@@ -103,35 +102,35 @@ take n = fst . splitAt n
 drop :: (HeapItem pol item) => Int -> ManagedHeap pol item -> ManagedHeap pol item
 drop n = snd . splitAt n
 
--- | @'splitAt' n h@ returns a list of the first @n@ items of @h@ and @h@, with
+-- | @'splitAt' n h@: Return a list of the first @n@ items of @h@ and @h@, with
 -- those elements removed.
 splitAt :: (HeapItem pol item) => Int -> ManagedHeap pol item
         -> ([item], ManagedHeap pol item)
 splitAt n heap = let (xs, heap') = I.splitAt n heap in (fmap merge2 xs, heap')
 
--- | @'takeWhile' p h@ lists the longest prefix of items in @h@ that satisfy @p@.
+-- | @'takeWhile' p h@: List the longest prefix of items in @h@ that satisfy @p@.
 takeWhile :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item -> [item]
 takeWhile p = fst . (span p)
 
--- | @'dropWhile' p h@ removes the longest prefix of items in @h@ that satisfy
+-- | @'dropWhile' p h@: Remove the longest prefix of items in @h@ that satisfy
 -- @p@.
 dropWhile :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
           -> ManagedHeap pol item
 dropWhile p = snd . (span p)
 
--- | @'span' p h@ returns the longest prefix of items in @h@ that satisfy @p@ and
+-- | @'span' p h@: Return the longest prefix of items in @h@ that satisfy @p@ and
 -- @h@, with those elements removed.
 span :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
      -> ([item], ManagedHeap pol item)
 span p heap = let (xs, heap') = I.span (translate p) heap in (fmap merge2 xs, heap')
 
--- | @'break' p h@ returns the longest prefix of items in @h@ that do /not/
--- satisfy @p@ and @h@, with those elements removed.
+-- | @'break' p h@: The longest prefix of items in @h@ that do /not/ satisfy @p@
+-- and @h@, with those elements removed.
 break :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
       -> ([item], ManagedHeap pol item)
 break p = span (not . p)
 
--- | /O(n log n)/. Builds a 'Heap' from the given items. Assuming you have a
+-- | /O(n log n)/. Build a 'Heap' from the given items. Assuming you have a
 -- sorted 'Foldable', you probably want to use 'fromDescFoldable' or
 -- 'fromAscFoldable', they are faster than this function.
 fromFoldable :: (Foldable f, Functor f, HeapItem pol item) => f item
@@ -139,7 +138,7 @@ fromFoldable :: (Foldable f, Functor f, HeapItem pol item) => f item
 fromFoldable = I.fromFoldable . fmap split
 {-# SPECIALISE fromFoldable :: (HeapItem pol item) => [item] -> ManagedHeap pol item #-}
 
--- | /O(n)/. Creates a 'Heap' from a 'Foldable' providing its items in ascending
+-- | /O(n)/. Create a 'Heap' from a 'Foldable' providing its items in ascending
 -- order of priority (i. e. in the same order they will be removed from the
 -- 'Heap'). This function is faster than 'fromFoldable' but not as fast as
 -- 'fromDescFoldable'.
@@ -160,15 +159,15 @@ fromDescFoldable :: (Foldable f, Functor f, HeapItem pol item) => f item
 fromDescFoldable = I.fromDescFoldable . fmap split
 {-# SPECIALISE fromDescFoldable :: (HeapItem pol item) => [item] -> ManagedHeap pol item #-}
 
--- | /O(n log n)/. Lists all items of the 'Heap' in no specific order.
+-- | /O(n log n)/. List all items of the 'Heap' in no specific order.
 toList :: (HeapItem pol item) => ManagedHeap pol item -> [item]
 toList = fmap merge2 . I.toList
 
--- | /O(n log n)/. Lists the items of the 'Heap' in ascending order of priority.
+-- | /O(n log n)/. List the items of the 'Heap' in ascending order of priority.
 toAscList :: (HeapItem pol item) => ManagedHeap pol item -> [item]
 toAscList = fmap merge2 . I.toAscList
 
--- | /O(n log n)/. Lists the items of the 'Heap' in descending order of priority.
+-- | /O(n log n)/. List the items of the 'Heap' in descending order of priority.
 -- Note that this function is not especially efficient (it is implemented in
 -- terms of 'reverse' and 'toAscList'), it is provided as a counterpart of the
 -- efficient 'fromDescFoldable' function.

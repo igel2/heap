@@ -12,54 +12,77 @@ import Text.Read ( Read(..) )
 --TODO: does this make D.H less verbosed *and* more simple?
 type ManagedHeap pol item = Heap (Prio pol item) (Val pol item)
 
----- | A 'Heap' which will always extract the minimum first.
+-- | A 'Heap' which will always extract the minimum first.
 type MinHeap a = Heap (Prio MinPolicy a) (Val MinPolicy a)
---
----- | A 'Heap' which will always extract the maximum first.
+
+-- | A 'Heap' which will always extract the maximum first.
 type MaxHeap a = Heap (Prio MaxPolicy a) (Val MaxPolicy a)
---
----- | A 'Heap' storing priority-value-associations. It only regards the priority
----- for determining the order of elements, the tuple with minimal 'fst' value
----- (i. e. priority) will always be the head of the 'Heap'.
+
+-- | A 'Heap' storing priority-value pairs @(prio, val)@. The order of elements
+-- is solely determined by the priority @prio@, the value @val@ has no influence.
+-- The priority-value pair with minmal priority will always be extracted first.
 type MinPrioHeap prio val = Heap (Prio FstMinPolicy (prio, val)) (Val FstMinPolicy (prio, val))
---
----- | A 'Heap' storing priority-value-associations. It only regards the priority
----- for determining the order of elements, the tuple with maximal 'fst' value
----- (i. e. priority) will always be the head of the 'Heap'.
+
+-- | A 'Heap' storing priority-value pairs @(prio, val)@. The order of elements
+-- is solely determined by the priority @prio@, the value @val@ has no influence.
+-- The priority-value pair with maximal priority will always be extracted first.
 type MaxPrioHeap prio val = Heap (Prio FstMaxPolicy (prio, val)) (Val FstMaxPolicy (prio, val))
 
----- | The 'HeapPolicy' class defines an order on the elements contained within
----- a 'Heap'.
-----
----- It works almost like the 'Ord' class (especially it has to define a correct
----- mathematical ordering), the only difference is that there are two type
----- parameters. They are needed to enable the type sytem to distinguish between
----- two 'Heap's which each have a different 'HeapPolicy': It prevents errors like
----- this one:
-----
----- @
---- let h1 = 'fromFoldable' [1..10] :: MinHeap Int
-----     h2 = 'fromFoldable' [1..10] :: MaxHeap Int
-----     h3 = 'union' h1 h2 -- we can't form the union of a Min- and a 'MaxHeap'
----- @
---class HeapPolicy p a where
---    -- | Compare two elements, just like 'compare' of the 'Ord' class, so this
---    -- function has to define a mathematical ordering. When using a 'HeapPolicy'
---    -- for a 'Heap', the minimal value (defined by this order) will be the head
---    -- of the 'Heap'.
---    heapCompare :: p -- ^ /Must not be evaluated/.
---        -> a         -- ^ Compared to 3rd parameter.
---        -> a         -- ^ Compared to 2nd parameter.
---        -> Ordering  -- ^ Result of the comparison.
-
+-- | @'HeapItem' pol item@ is a type class for items that can be stored in a
+-- 'Heap'. A raw @'Heap' prio val@ only provides a minimum priority heap (i. e.
+-- @val@ doesn't influence the ordering of elements and the pair with minimal
+-- @prio@ will be extracted first, see there). The job of this class is to
+-- translate between arbitrary @item@s and priority-value pairs @('Prio' pol
+-- item, 'Val' pol item)@, depending on the policy @pol@ to be used, and thus
+-- being able to use 'Heap' not only 'MinPrioHeap', but also as 'MinHeap',
+-- 'MaxHeap', 'MaxPrioHeap' or a custom implementation. In short: The job of this
+-- class is to deconstruct arbitrary @item@s into a @(prio, val)@ pairs that can
+-- be handled by a minimum priority heap.
+--
+-- Example: Consider you want to use @'Heap' prio val@ as a @'MaxHeap' a@. You
+-- would have to invert the order of @a@ (e. g. by @newtype InvOrd a = InvOrd a@
+-- along with an apropriate 'Ord' instance for it) and then use a @type MaxHeap =
+-- 'Heap' (InvOrd a) ()@. You'd also have to translate every @x@ to @(InvOrd x,
+-- ())@ before insertion and back after removal in order to retrieve your
+-- original type @a@.
+--
+-- This functionality is provided by the 'HeapItem' class. In the above example,
+-- you'd use a 'MaxHeap'. The according instance declaration is of course already
+-- provided and looks like this (simplified):
+--
+-- @data 'MaxPolicy'
+--
+-- instance (Ord a) => HeapItem MaxPolicy a where
+--     newtype 'Prio' 'MaxPolicy' a = MaxP a deriving ('Eq')
+--     type    'Val'  'MaxPolicy' a = ()
+--     'split'  x           = (MaxP x, ())
+--     'merge2' (MaxP x, _) = x
+--
+-- instance ('Ord' a) => 'Ord' ('Prio' 'MaxPolicy' a) where
+--     'compare' (MaxP x) (MaxP y) = 'compare' y x
+-- @
+--
+-- Where 'MaxPolicy' is a phantom type describing which 'HeapItem' instance is
+-- actually meant (we also have 'MinPolicy' for example) and @MaxP@ inverts the
+-- ordering of @a@, so that the maximum will be on top of the 'Heap'.
+--
+-- The conversion functions 'split' and 'merge2' have to make sure that
+-- @forall x. 'merge2' ('split' x) == x@ (merge and split don't remove, add or
+-- change any information) and @forall p v f. fst (split (merge2 (p, (f v))) ==
+-- fst (split (merge2 (p, v)))@  (modifying the associated value doesn't alter
+-- the priority).
 class (Ord (Prio pol item)) => HeapItem pol item where
+    -- | The part of @item@ that determines the ordering of elements on a 'Heap'.
     data Prio pol item :: *
+    -- | Everything not part of @'Prio' pol item@
     type Val  pol item :: *
 
 -- id === (uncurry merge) . split
 -- forall p v f. fst (split (merge p (f v)))
 --            == fst (split (merge p v))
+    -- | Translate an @item@ into a priority-value pair.
     split  :: item -> (Prio pol item, Val pol item)
+    -- | Restore the @item@ from a priority-value pair.
     merge2 :: (Prio pol item, Val pol item) -> item
 {-# RULES
 --TODO:"merge2/split" forall x. merge2 (split x) = x

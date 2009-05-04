@@ -6,12 +6,9 @@
 --
 -- A @'Heap' prio val@ associates a priority @prio@ to a value @val@. A
 -- priority-value pair with minimum priority will always be the head of the
--- 'Heap', so this module provides minimum priority heaps. Note that the value
+-- 'Heap', so this module implements minimum priority heaps. Note that the value
 -- associated to the priority has no influence on the ordering of elements, only
 -- the priority does.
---
--- The "Data.Heap" module provides a much more convenient 'Heap' access, so you
--- probably want to use it instead of using this module directly.
 module Data.Heap.Internal
     ( -- * A basic heap type
 #ifdef __DEBUG__
@@ -107,7 +104,7 @@ isEmpty Empty = True
 isEmpty _     = False
 {-# INLINE isEmpty #-}
 
--- | /O(1)/. Find the rank of a 'Heap', which is the length of its right spine.
+-- | /O(1)/. Find the rank of a 'Heap' (the length of its right spine).
 rank :: Heap prio val -> Int
 rank Empty = 0
 rank heap  = _rank heap
@@ -119,7 +116,7 @@ size Empty = 0
 size heap  = _size heap
 {-# INLINE size #-}
 
--- | /O(1)/. Constructs an empty 'Heap'.
+-- | /O(1)/. Construct an empty 'Heap'.
 empty :: Heap prio val
 empty = Empty
 {-# INLINE empty #-}
@@ -151,7 +148,7 @@ uncheckedCons p v heap = assert (maybe True (\(p', _, _) -> p <= p') (view heap)
                               }
 {-# INLINE uncheckedCons #-}
 
--- | /O(log max(n, m))/. The union of two 'Heap's.
+-- | /O(log max(n, m))/. Form the union of two 'Heap's.
 union :: (Ord prio) => Heap prio val -> Heap prio val -> Heap prio val
 union heap  Empty = heap
 union Empty heap  = heap
@@ -161,7 +158,7 @@ union heap1 heap2 = let p1 = _priority heap1
     then makeT p1 (_value heap1) (_left heap1) (union (_right heap1) heap2)
     else makeT p2 (_value heap2) (_left heap2) (union (_right heap2) heap1)
 
--- | Builds a 'Heap' from a priority, a value and two more 'Heap's. Therefore,
+-- | Build a 'Heap' from a priority, a value and two more 'Heap's. Therefore,
 -- the /priority has to be less or equal/ than all priorities in both 'Heap'
 -- parameters.
 --
@@ -176,7 +173,7 @@ makeT p v a b = let ra = rank a
     where checkPrio = maybe True (\(p', _, _) -> p <= p') . view
 {-# INLINE makeT #-}
 
--- | Builds the union over all given 'Heap's.
+-- | Build the union of all given 'Heap's.
 unions :: (Ord prio) => [Heap prio val] -> Heap prio val
 unions heaps = case tournamentFold' heaps of
     []  -> empty
@@ -211,8 +208,8 @@ partition f heap
           (r1, r2) = partition f (_right heap)
 {-# INLINE partition #-}
 
--- | @'splitAt' n h@ returns a list of the lowest @n@ priority-value pairs of @h@,
--- in  ascending order of priority, and @h@, with those elements removed.
+-- | @'splitAt' n h@: A list of the lowest @n@ priority-value pairs of @h@, in
+--  ascending order of priority, and @h@, with those elements removed.
 splitAt :: (Ord prio) => Int -> Heap prio val -> ([(prio, val)], Heap prio val)
 splitAt n heap
     | n > 0     = case view heap of
@@ -222,7 +219,7 @@ splitAt n heap
     | otherwise = ([], heap)
 {-# INLINE splitAt #-}
 
--- | @'span' p h@ returns the longest prefix of priority-value pairs of @h@, in
+-- | @'span' p h@: The longest prefix of priority-value pairs of @h@, in
 -- ascending order of priority, that satisfy @p@ and @h@, with those elements
 -- removed.
 span :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val
@@ -235,7 +232,7 @@ span f heap
                      else ([], heap)
 {-# INLINE span #-}
 
--- | /O(n log n)/. Builds a 'Heap' from the given priority-value pairs. Assuming
+-- | /O(n log n)/. Build a 'Heap' from the given priority-value pairs. Assuming
 -- you have a sorted 'Foldable', you probably want to use 'fromDescFoldable' or
 -- 'fromAscFoldable', they are faster than this function.
 fromFoldable :: (Foldable f, Ord prio) => f (prio, val) -> Heap prio val
@@ -256,7 +253,7 @@ fromDescFoldable = foldl' (\h (p, v) -> uncheckedCons p v h) empty
 {-# INLINE fromDescFoldable #-}
 {-# SPECIALISE fromDescFoldable :: (Ord prio) => [(prio, val)] -> Heap prio val #-}
 
--- | /O(n log n)/. Lists all priority-value pairs of the 'Heap' in no specific
+-- | /O(n log n)/. List all priority-value pairs of the 'Heap' in no specific
 -- order.
 toList :: Heap prio val -> [(prio, val)]
 toList Empty = []
@@ -267,8 +264,8 @@ toList heap  = let left  = _left heap
                                                   else toList left  ++ toList right
 {-# INLINE toList #-}
 
--- | /O(n log n)/. Lists priority-value pairs of the 'Heap' in ascending order of
--- priority.
+-- | /O(n log n)/. List the priority-value pairs of the 'Heap' in ascending order
+-- of priority.
 toAscList :: (Ord prio) => Heap prio val -> [(prio, val)]
 toAscList = fst . span (\_ _ -> True)
 {-# INLINE toAscList #-}
