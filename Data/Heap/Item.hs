@@ -13,20 +13,20 @@ import Text.Read ( Read(..) )
 type ManagedHeap pol item = Heap (Prio pol item) (Val pol item)
 
 -- | A 'Heap' which will always extract the minimum first.
-type MinHeap a = Heap (Prio MinPolicy a) (Val MinPolicy a)
+type MinHeap a = ManagedHeap MinPolicy a
 
 -- | A 'Heap' which will always extract the maximum first.
-type MaxHeap a = Heap (Prio MaxPolicy a) (Val MaxPolicy a)
+type MaxHeap a = ManagedHeap MaxPolicy a
 
 -- | A 'Heap' storing priority-value pairs @(prio, val)@. The order of elements
 -- is solely determined by the priority @prio@, the value @val@ has no influence.
 -- The priority-value pair with minmal priority will always be extracted first.
-type MinPrioHeap prio val = Heap (Prio FstMinPolicy (prio, val)) (Val FstMinPolicy (prio, val))
+type MinPrioHeap prio val = ManagedHeap FstMinPolicy (prio, val)
 
 -- | A 'Heap' storing priority-value pairs @(prio, val)@. The order of elements
 -- is solely determined by the priority @prio@, the value @val@ has no influence.
 -- The priority-value pair with maximal priority will always be extracted first.
-type MaxPrioHeap prio val = Heap (Prio FstMaxPolicy (prio, val)) (Val FstMaxPolicy (prio, val))
+type MaxPrioHeap prio val = ManagedHeap FstMaxPolicy (prio, val)
 
 -- | @'HeapItem' pol item@ is a type class for items that can be stored in a
 -- 'Heap'. A raw @'Heap' prio val@ only provides a minimum priority heap (i. e.
