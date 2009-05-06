@@ -37,7 +37,7 @@ type MinPrioHeap prio val = ManagedHeap FstMinPolicy (prio, val)
 
 -- | A 'Heap' storing priority-value pairs @(prio, val)@. The order of elements
 -- is solely determined by the priority @prio@, the value @val@ has no influence.
--- The priority-value pair with maximal priority will always be extracted first.
+-- The priority-value pair with maximum priority will always be extracted first.
 type MaxPrioHeap prio val = ManagedHeap FstMaxPolicy (prio, val)
 
 -- | @'HeapItem' pol item@ is a type class for items that can be stored in a
