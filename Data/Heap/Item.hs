@@ -80,10 +80,10 @@ type MaxPrioHeap prio val = ManagedHeap FstMaxPolicy (prio, val)
 --
 -- The conversion functions 'split' and 'merge' have to make sure that
 --
--- (1) @forall x. 'merge' ('split' x) == x@ ('merge' and 'split' don't remove,
---     add or alter any information)
+-- (1) @forall p v. 'split' ('merge' (p, v)) == (p, v)@ ('merge' and 'split'
+--     don't remove, add or alter any information)
 --
--- (2) @forall p v f. 'fst' ('split' ('merge' (p, (f v))) == 'fst' ('split'
+-- (2) @forall p v f. 'fst' ('split' ('merge' (p, f v)) == 'fst' ('split'
 --     ('merge' (p, v)))@ (modifying the associated value doesn't alter the
 --      priority)
 class (Ord (Prio pol item)) => HeapItem pol item where
