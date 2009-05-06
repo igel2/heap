@@ -75,11 +75,15 @@ instance (Ord prio, Ord val) => Ord (Heap prio val) where
 instance (Binary prio, Binary val) => Binary (Heap prio val) where
     put Empty                = put False
     put (Tree r s p v hl hr) = put True >> put (r, s, p, v, hl, hr)
-    get = do
-      node <- get
-      if node then do (r, s, p, v, hl, hr) <- get
-                      return $ Tree r s p v hl hr
-              else return Empty
+
+    get = do node <- get
+             if node then do (r, s, p, v, hl, hr) <- get
+                             return $ Tree r s p v hl hr
+                     else return Empty
+--TODO: compare to
+--instance (Binary prio, Binary val, Ord prio) => Binary (Heap prio val) where
+--    put = put . reverse . toAscList
+--    get = fmap (fromDescFoldable :: [(prio, val)] -> Heap prio val) get
 
 instance (Ord prio) => Monoid (Heap prio val) where
     mempty  = empty
