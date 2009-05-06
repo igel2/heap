@@ -2,14 +2,26 @@
   , GeneralizedNewtypeDeriving, MultiParamTypeClasses, TypeFamilies
   #-}
 
--- |
-module Data.Heap.Item where
+-- | This module provides the 'HeapItem' type family along with necessary
+-- instance declarations used to translate between inserted items and the
+-- priority-value pairs needed by the minimum priority heap of the module
+-- "Data.Heap.Internal".
+module Data.Heap.Item
+    ( -- * Type aliases
+      ManagedHeap, MinHeap, MaxHeap, MinPrioHeap, MaxPrioHeap
+      -- * The HeapItem type family
+    , HeapItem(..)
+    , MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
+      -- * Auxiliary functions
+    , splitF
+    ) where
 
 import Data.Binary ( Binary )
 import Data.Heap.Internal ( Heap )
 import Text.Read ( Read(..) )
 
---TODO: does this make D.H less verbosed *and* more simple?
+-- | A 'Heap' which uses the 'HeapItem' instance of @pol item@ to organise its
+-- elements.
 type ManagedHeap pol item = Heap (Prio pol item) (Val pol item)
 
 -- | A 'Heap' which will always extract the minimum first.
@@ -86,12 +98,7 @@ class (Ord (Prio pol item)) => HeapItem pol item where
     merge :: (Prio pol item, Val pol item) -> item
 {-# RULES "split/merge" forall x. split (merge x) = x #-}
 
--- | 'split' a function on @item@s to one on priority-value pairs.
-splitF :: (HeapItem pol item) => (item -> a) -> Prio pol item -> Val pol item -> a
-splitF f p v = let x = merge (p, v) in f x
-{-# INLINE splitF #-}
-
----- | Policy type for a 'MinHeap'.
+-- | Policy type for a 'MinHeap'.
 data MinPolicy
 
 instance (Ord a) => HeapItem MinPolicy a where
@@ -108,7 +115,7 @@ instance (Read a) => Read (Prio MinPolicy a) where
 instance (Show a) => Show (Prio MinPolicy a) where
     show (MinP x) = show x
 
----- | Policy type for a 'MaxHeap'.
+-- | Policy type for a 'MaxHeap'.
 data MaxPolicy
 
 instance (Ord a) => HeapItem MaxPolicy a where
@@ -128,7 +135,7 @@ instance (Read a) => Read (Prio MaxPolicy a) where
 instance (Show a) => Show (Prio MaxPolicy a) where
     show (MaxP x) = show x
 
----- | Policy type for a @(priority, value)@ 'MinPrioHeap'.
+-- | Policy type for a @(prio, val)@ 'MinPrioHeap'.
 data FstMinPolicy
 
 instance (Ord prio) => HeapItem FstMinPolicy (prio, val) where
@@ -145,7 +152,7 @@ instance (Read prio) => Read (Prio FstMinPolicy (prio, val)) where
 instance (Show prio) => Show (Prio FstMinPolicy (prio, val)) where
     show (FMinP x) = show x
 
----- | Policy type for a @(priority, value)@ 'MaxPrioHeap'.
+-- | Policy type for a @(prio, val)@ 'MaxPrioHeap'.
 data FstMaxPolicy
 
 instance (Ord prio) => HeapItem FstMaxPolicy (prio, val) where
@@ -164,3 +171,8 @@ instance (Read prio) => Read (Prio FstMaxPolicy (prio, val)) where
 
 instance (Show prio) => Show (Prio FstMaxPolicy (prio, val)) where
     show (FMaxP x) = show x
+
+-- | 'split' a function on @item@s to one on priority-value pairs.
+splitF :: (HeapItem pol item) => (item -> a) -> Prio pol item -> Val pol item -> a
+splitF f p v = let x = merge (p, v) in f x
+{-# INLINE splitF #-}
