@@ -40,13 +40,13 @@ runTests = do
     qc "read/show property for FstMaxPolicy" (readShowProperty
         :: Prio FstMaxPolicy (Int, Char) -> Bool)
 
-    qc "decode/encode property for MinPolicy" (binaryProperty
+    qc "Binary property for MinPolicy" (binaryProperty
         :: Prio MinPolicy Int -> Bool)
-    qc "decode/encode property for MaxPolicy" (binaryProperty
+    qc "Binary property for MaxPolicy" (binaryProperty
         :: Prio MaxPolicy Int -> Bool)
-    qc "decode/encode property for FstMinPolicy" (binaryProperty
+    qc "Binary property for FstMinPolicy" (binaryProperty
         :: Prio FstMinPolicy (Int, Char) -> Bool)
-    qc "decode/encode property for FstMaxPolicy" (binaryProperty
+    qc "Binary property for FstMaxPolicy" (binaryProperty
         :: Prio FstMaxPolicy (Int, Char) -> Bool)
 
     qc "split/merge for MinPolicy" (splitMergeProperty

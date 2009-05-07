@@ -12,11 +12,13 @@ runTests = do
     qc "Ord property" (ordProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
     qc "leftist heap property" (leftistHeapProperty :: Heap Int Char -> Bool)
     qc "read/show property" (readShowProperty :: Heap Int Char -> Bool)
-    qc "decode/encode property" (binaryProperty :: Heap Int Char -> Bool)
-    qc "monoid property" (monoidProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
-    qc "functor property" (functorProperty (subtract 1000) (*42) :: Heap Char Int -> Bool)
+    qc "Binary property" (binaryProperty :: Heap Int Char -> Bool)
+    qc "Monoid property" (monoidProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
+    qc "Functor property" (functorProperty (subtract 1000) (*42) :: Heap Char Int -> Bool)
+    qc "Foldable property" (foldableProperty :: Heap Char Int -> Bool)
     qc "size property" sizeProperty
     qc "view property" viewProperty
+    qc "singleton property" (singletonProperty :: Char -> Int -> Bool)
 
 instance (Arbitrary prio, Arbitrary val, Ord prio) => Arbitrary (Heap prio val) where
     arbitrary = do
@@ -39,7 +41,7 @@ sizeProperty n = let
     n' = abs n `mod` 100
     h  = fromFoldable (zip [1..n'] (repeat ())) :: Heap Int ()
     in
-    size h == n' && (n' > 0 || isEmpty h)
+    size h == n' && if n' == 0 then isEmpty h else not (isEmpty h)
 
 viewProperty :: [Int] -> Bool
 viewProperty []   = True
@@ -49,3 +51,9 @@ viewProperty list = let
     in case view heap of
         Nothing          -> False -- list is not empty
         Just (p, (), hs) -> p == m && viewProperty (tail list)
+
+singletonProperty :: (Ord prio, Ord val) => prio -> val -> Bool
+singletonProperty p v = let
+    heap = singleton p v
+    in
+    leftistHeapProperty heap && size heap == 1 && view heap == Just (p, v, empty)

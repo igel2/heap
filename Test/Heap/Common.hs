@@ -5,10 +5,13 @@ module Test.Heap.Common
     , binaryProperty
     , monoidProperty
     , functorProperty
+    , foldableProperty
     ) where
 
 import Data.Binary
+import Data.Foldable ( Foldable(..) )
 import Data.Monoid
+import Prelude hiding ( foldl, foldr )
 import Test.QuickCheck
 
 qc :: (Testable prop) => String -> prop -> IO ()
@@ -49,3 +52,6 @@ monoidProperty m1 m2 m3 = let
 functorProperty :: (Functor f, Eq (f a), Eq (f c)) => (b -> c) -> (a -> b) -> f a -> Bool
 functorProperty f g fun = fun == fmap id fun
     && fmap (f . g) fun == fmap f (fmap g fun)
+
+foldableProperty :: (Foldable f, Eq a) => f a -> Bool
+foldableProperty xs = foldl (flip (:)) [] xs == reverse (foldr (:) [] xs)
