@@ -8,6 +8,8 @@ import Test.QuickCheck
 
 runTests :: IO ()
 runTests = do
+    qc "Eq property" (eqProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
+    qc "Ord property" (ordProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
     qc "leftist heap property" (leftistHeapProperty :: Heap Int Char -> Bool)
     qc "read/show property" (readShowProperty :: Heap Int Char -> Bool)
     qc "decode/encode property" (binaryProperty :: Heap Int Char -> Bool)

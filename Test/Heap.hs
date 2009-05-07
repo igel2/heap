@@ -29,30 +29,6 @@ testHeap = do
     where
     testProperty x = x `mod` 2 == 0
 
-readShowProperty :: (HeapPolicy p a, Show a, Read a) => Heap p a -> Bool
-readShowProperty heap = heap == read (show heap)
-
-binaryProperty :: (HeapPolicy p a, Eq a, Binary a) => Heap p a -> Bool
-binaryProperty heap = let
-    heap' = decode (encode heap)
-    in leftistHeapProperty heap' && heap' == heap
-
-monoidProperty :: (Monoid m, Eq m) => m -> m -> m -> Bool
-monoidProperty m1 m2 m3 = let
-    result = mconcat [m1, m2, m3]
-    in
-    result == (m1 `mappend` m2) `mappend` m3
-        && result == m1 `mappend` (m2 `mappend` m3)
-        && result == mempty `mappend` result
-        && result == result `mappend` mempty
-
-sizeProperty :: Int -> Bool
-sizeProperty n = let
-    n' = abs n `mod` 100
-    h  = fromFoldable [1..n'] :: MaxHeap Int
-    in
-    Heap.size h == n' && (if n' == 0 then Heap.isEmpty h && Heap.null h else True)
-
 orderProperty :: Int -> [Int] -> Bool
 orderProperty n list = let
     n'          = signum n * (n `mod` 100)
@@ -66,16 +42,6 @@ orderProperty n list = let
     equal _ _  [] = False
     equal _ [] _  = False
     equal h (x:xs) (y:ys) = EQ == heapCompare (policy h) x y && equal h xs ys
-
-headTailProperty :: [Int] -> Bool
-headTailProperty []   = True
-headTailProperty list = let
-    heap  = fromFoldable list :: MaxHeap Int
-    list' = sortBy (heapCompare (policy heap)) list
-    in case view heap of
-        Nothing      -> False -- list is not empty
-        Just (h, hs) -> h == List.head list' && hs == (fromAscFoldable (List.tail list'))
-            && h == unsafeHead heap && hs == unsafeTail heap && (h, hs) == unsafeUncons heap
 
 takeDropSplitAtProperty :: (Ord a) => Int -> MinHeap a -> Bool
 takeDropSplitAtProperty n heap = let

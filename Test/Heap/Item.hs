@@ -10,6 +10,45 @@ import Test.QuickCheck
 
 runTests :: IO ()
 runTests = do
+    qc "Eq property for MinPolicy" (eqProperty
+        :: Prio MinPolicy Int -> Prio MinPolicy Int -> Prio MinPolicy Int -> Bool)
+    qc "Eq property for MaxPolicy" (eqProperty
+        :: Prio MaxPolicy Int -> Prio MaxPolicy Int -> Prio MaxPolicy Int -> Bool)
+    qc "Eq property for FstMinPolicy" (eqProperty
+        :: Prio FstMinPolicy (Int, Char) -> Prio FstMinPolicy (Int, Char)
+        -> Prio FstMinPolicy (Int, Char) -> Bool)
+    qc "Eq property for FstMaxPolicy" (eqProperty
+        :: Prio FstMaxPolicy (Int, Char) -> Prio FstMaxPolicy (Int, Char)
+        -> Prio FstMaxPolicy (Int, Char) -> Bool)
+    qc "Ord property for MinPolicy" (ordProperty
+        :: Prio MinPolicy Int -> Prio MinPolicy Int -> Prio MinPolicy Int -> Bool)
+    qc "Ord property for MaxPolicy" (ordProperty
+        :: Prio MaxPolicy Int -> Prio MaxPolicy Int -> Prio MaxPolicy Int -> Bool)
+    qc "Ord property for FstMinPolicy" (ordProperty
+        :: Prio FstMinPolicy (Int, Char) -> Prio FstMinPolicy (Int, Char)
+        -> Prio FstMinPolicy (Int, Char) -> Bool)
+    qc "Ord property for FstMaxPolicy" (ordProperty
+        :: Prio FstMaxPolicy (Int, Char) -> Prio FstMaxPolicy (Int, Char)
+        -> Prio FstMaxPolicy (Int, Char) -> Bool)
+
+    qc "read/show property for MinPolicy" (readShowProperty
+        :: Prio MinPolicy Int -> Bool)
+    qc "read/show property for MaxPolicy" (readShowProperty
+        :: Prio MaxPolicy Int -> Bool)
+    qc "read/show property for FstMinPolicy" (readShowProperty
+        :: Prio FstMinPolicy (Int, Char) -> Bool)
+    qc "read/show property for FstMaxPolicy" (readShowProperty
+        :: Prio FstMaxPolicy (Int, Char) -> Bool)
+
+    qc "decode/encode property for MinPolicy" (binaryProperty
+        :: Prio MinPolicy Int -> Bool)
+    qc "decode/encode property for MaxPolicy" (binaryProperty
+        :: Prio MaxPolicy Int -> Bool)
+    qc "decode/encode property for FstMinPolicy" (binaryProperty
+        :: Prio FstMinPolicy (Int, Char) -> Bool)
+    qc "decode/encode property for FstMaxPolicy" (binaryProperty
+        :: Prio FstMaxPolicy (Int, Char) -> Bool)
+
     qc "split/merge for MinPolicy" (splitMergeProperty
         :: Prio MinPolicy Int -> Val MinPolicy Int -> Bool)
     qc "split/merge for MaxPolicy" (splitMergeProperty
@@ -36,24 +75,6 @@ runTests = do
         :: Prio FstMinPolicy (Int, Char) -> Val FstMinPolicy (Int, Char) -> Bool)
     qc "splitF property for FstMaxPolicy" (splitFProperty (\(x, y) -> (pred x, succ y))
         :: Prio FstMaxPolicy (Int, Char) -> Val FstMaxPolicy (Int, Char) -> Bool)
-
-    qc "read/show property for MinPolicy" (readShowProperty
-        :: Prio MinPolicy Int -> Bool)
-    qc "read/show property for MaxPolicy" (readShowProperty
-        :: Prio MaxPolicy Int -> Bool)
-    qc "read/show property for FstMinPolicy" (readShowProperty
-        :: Prio FstMinPolicy (Int, Char) -> Bool)
-    qc "read/show property for FstMaxPolicy" (readShowProperty
-        :: Prio FstMaxPolicy (Int, Char) -> Bool)
-
-    qc "decode/encode property for MinPolicy" (binaryProperty
-        :: Prio MinPolicy Int -> Bool)
-    qc "decode/encode property for MaxPolicy" (binaryProperty
-        :: Prio MaxPolicy Int -> Bool)
-    qc "decode/encode property for FstMinPolicy" (binaryProperty
-        :: Prio FstMinPolicy (Int, Char) -> Bool)
-    qc "decode/encode property for FstMaxPolicy" (binaryProperty
-        :: Prio FstMaxPolicy (Int, Char) -> Bool)
 
 instance (Arbitrary item, HeapItem pol item) => Arbitrary (Prio pol item) where
     arbitrary = fmap (fst . split) arbitrary

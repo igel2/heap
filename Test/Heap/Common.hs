@@ -1,5 +1,6 @@
 module Test.Heap.Common
     ( qc
+    , eqProperty, ordProperty
     , readShowProperty
     , binaryProperty
     , monoidProperty
@@ -14,6 +15,21 @@ qc :: (Testable prop) => String -> prop -> IO ()
 qc msg prop = quickCheck
     $ whenFail (putStrLn msg)
     $ label msg prop
+
+eqProperty :: (Eq a) => a -> a -> a -> Bool
+eqProperty x y z = (x == y) == (y == x)
+    && ((not (x == y && y == z)) || x == z)
+
+ordProperty :: (Ord a) => a -> a -> a -> Bool
+ordProperty x y z = let
+    _min = minimum [x, y, z]
+    _max = maximum [x, y, z]
+    in case compare x y of
+            LT -> x < y && x <= y && not (x > y) && not (x >= y)
+            EQ -> x == y && x <= y && x >= y && not (x < y) && not (x > y)
+            GT -> x > y && x >= y && not (x < y) && not (x <= y)
+        && _min <= x && _min <= y && _min <= z
+        && _max >= x && _max >= y && _max >= z
 
 readShowProperty :: (Read a, Show a, Eq a) => a -> Bool
 readShowProperty x = x == read (show x)
