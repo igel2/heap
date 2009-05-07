@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+
 module Test.Heap.Item
     ( runTests
     ) where
@@ -36,15 +37,23 @@ runTests = do
     qc "splitF property for FstMaxPolicy" (splitFProperty (\(x, y) -> (pred x, succ y))
         :: Prio FstMaxPolicy (Int, Char) -> Val FstMaxPolicy (Int, Char) -> Bool)
 
-    qc "read/show property for MinPolicy" (readShowProperty :: Prio MinPolicy Int -> Bool)
-    qc "read/show property for MaxPolicy" (readShowProperty :: Prio MaxPolicy Int -> Bool)
-    qc "read/show property for FstMinPolicy" (readShowProperty :: Prio FstMinPolicy (Int, Char) -> Bool)
-    qc "read/show property for FstMaxPolicy" (readShowProperty :: Prio FstMaxPolicy (Int, Char) -> Bool)
+    qc "read/show property for MinPolicy" (readShowProperty
+        :: Prio MinPolicy Int -> Bool)
+    qc "read/show property for MaxPolicy" (readShowProperty
+        :: Prio MaxPolicy Int -> Bool)
+    qc "read/show property for FstMinPolicy" (readShowProperty
+        :: Prio FstMinPolicy (Int, Char) -> Bool)
+    qc "read/show property for FstMaxPolicy" (readShowProperty
+        :: Prio FstMaxPolicy (Int, Char) -> Bool)
 
-    qc "decode/encode property for MinPolicy" (binaryProperty :: Prio MinPolicy Int -> Bool)
-    qc "decode/encode property for MaxPolicy" (binaryProperty :: Prio MaxPolicy Int -> Bool)
-    qc "decode/encode property for FstMinPolicy" (binaryProperty :: Prio FstMinPolicy (Int, Char) -> Bool)
-    qc "decode/encode property for FstMaxPolicy" (binaryProperty :: Prio FstMaxPolicy (Int, Char) -> Bool)
+    qc "decode/encode property for MinPolicy" (binaryProperty
+        :: Prio MinPolicy Int -> Bool)
+    qc "decode/encode property for MaxPolicy" (binaryProperty
+        :: Prio MaxPolicy Int -> Bool)
+    qc "decode/encode property for FstMinPolicy" (binaryProperty
+        :: Prio FstMinPolicy (Int, Char) -> Bool)
+    qc "decode/encode property for FstMaxPolicy" (binaryProperty
+        :: Prio FstMaxPolicy (Int, Char) -> Bool)
 
 instance (Arbitrary item, HeapItem pol item) => Arbitrary (Prio pol item) where
     arbitrary = fmap (fst . split) arbitrary
