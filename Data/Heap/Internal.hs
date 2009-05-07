@@ -35,7 +35,7 @@ import Control.Exception ( assert )
 import Data.Binary ( Binary(..) )
 import Data.Foldable ( Foldable(..), foldl' )
 import qualified Data.Foldable as Foldable ( toList )
-import Data.List ( sortBy )
+import Data.List ( groupBy, sortBy )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
 import Data.Typeable ( Typeable )
@@ -70,7 +70,7 @@ instance (Ord prio, Ord val) => Eq (Heap prio val) where
     heap1 == heap2 = EQ == compare heap1 heap2
 
 instance (Ord prio, Ord val) => Ord (Heap prio val) where
-    compare = comparing toAscList
+    compare = comparing toPairAscList
 
 instance (Binary prio, Binary val) => Binary (Heap prio val) where
     put Empty                = put False
@@ -273,3 +273,11 @@ toList heap  = let left  = _left heap
 toAscList :: (Ord prio) => Heap prio val -> [(prio, val)]
 toAscList = fst . span (\_ _ -> True)
 {-# INLINE toAscList #-}
+
+-- | List the priority-value pairs of the 'Heap' just like 'toAscList' does, but
+-- don't ignore the value @val@ when sorting.
+toPairAscList :: (Ord prio, Ord val) => Heap prio val -> [(prio, val)]
+toPairAscList = concat
+                . fmap (sortBy (comparing snd))
+                . groupBy (\x y -> fst x == fst y)
+                . toAscList
