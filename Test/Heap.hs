@@ -79,16 +79,6 @@ listProperty xs = let
         && (and (map ((== xsAsc) . toAscList) [h1, h2, h3]))
         && (and (map ((== xsDesc) . toDescList) [h1, h2, h3]))
 
-partitionFilterProperty :: (HeapPolicy p a) => (a -> Bool) -> Heap p a -> Bool
-partitionFilterProperty p heap = let
-    (yes,  no)  = Heap.partition p heap
-    (yes', no') = List.partition p (toList heap)
-    in
-    yes == fromFoldable yes'
-        && no == fromFoldable no'
-        && (Heap.filter p heap) == fromFoldable yes'
-        && yes `Heap.union` no == heap -- nothing gets lost
-
 orderingProperty :: (Ord a) => MinHeap a -> MinHeap a -> Bool
 orderingProperty heap1 heap2 = let
     list1 = toAscList heap1

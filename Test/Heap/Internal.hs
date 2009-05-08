@@ -2,7 +2,9 @@ module Test.Heap.Internal
     ( runTests
     ) where
 
+import Data.Char
 import Data.Heap.Internal
+import qualified Data.List as List
 import Test.Heap.Common
 import Test.QuickCheck
 
@@ -19,10 +21,14 @@ runTests = do
     qc "size property" sizeProperty
     qc "view property" viewProperty
     qc "singleton property" (singletonProperty :: Char -> Int -> Bool)
+    qc "partition property" (partitionProperty testProp :: Heap Char Int -> Bool)
+    where
+    testProp :: Char -> Int -> Bool
+    testProp c i = even i && isLetter c
 
 instance (Arbitrary prio, Arbitrary val, Ord prio) => Arbitrary (Heap prio val) where
     arbitrary = do
-        len  <- choose (0, 100)
+        len <- choose (0, 100)
         fmap fromFoldable $ vector len
 
 leftistHeapProperty :: (Ord prio) => Heap prio val -> Bool
@@ -57,3 +63,14 @@ singletonProperty p v = let
     heap = singleton p v
     in
     leftistHeapProperty heap && size heap == 1 && view heap == Just (p, v, empty)
+
+partitionProperty :: (Ord prio, Ord val) => (prio -> val -> Bool) -> Heap prio val -> Bool
+partitionProperty p heap = let
+    (yes,  no)  = partition p heap
+    (yes', no') = List.partition (uncurry p) (toList heap)
+    in
+    (heap, empty) == partition (\_ _ -> True) heap
+        && (empty, heap) == partition (\_ _ -> False) heap
+        && yes == fromFoldable yes'
+        && no == fromFoldable no'
+        && yes `union` no == heap -- nothing gets lost
