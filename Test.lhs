@@ -1,4 +1,4 @@
-#! /usr/bin/runghc -D__DEBUG__ -Wall -O0
+#! /usr/bin/runghc -D__DEBUG__ -Wall -fno-ignore-asserts
 
 >
 > module Main where
@@ -11,6 +11,6 @@
 > main = do
 >     putStrLn "Tests for Data.Heap.Item:"     >> Item.runTests     >> putStrLn ""
 >     putStrLn "Tests for Data.Heap.Internal:" >> Internal.runTests >> putStrLn ""
->     putStrLn "Tests for Data.Heap:"          >> Heap.runTests     >> putStrLn ""
+>     putStrLn "Tests for Data.Heap:"          >> Heap.runTests
 >
 
