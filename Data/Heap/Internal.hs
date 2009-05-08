@@ -67,7 +67,7 @@ instance (Show prio, Show val) => Show (Heap prio val) where
     show = ("fromList " ++) . show . toList
 
 instance (Ord prio, Ord val) => Eq (Heap prio val) where
-    heap1 == heap2 = EQ == compare heap1 heap2
+    heap1 == heap2 = size heap1 == size heap2 && EQ == compare heap1 heap2
 
 instance (Ord prio, Ord val) => Ord (Heap prio val) where
     compare = comparing toPairAscList
