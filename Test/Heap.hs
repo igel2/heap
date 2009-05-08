@@ -43,29 +43,6 @@ orderProperty n list = let
     equal _ [] _  = False
     equal h (x:xs) (y:ys) = EQ == heapCompare (policy h) x y && equal h xs ys
 
-takeDropSplitAtProperty :: (Ord a) => Int -> MinHeap a -> Bool
-takeDropSplitAtProperty n heap = let
-    n'           = signum n * (n `mod` 100)
-    (begin, end) = Heap.splitAt n heap
-    begin'       = Heap.take n heap
-    end'         = Heap.drop n heap
-    in
-    begin == begin' && end == end'
-
-takeWhileSpanBreakProperty :: Int -> Int -> Bool
-takeWhileSpanBreakProperty len index = let
-    length'      = abs (len `mod` 100)
-    index'       = abs (index `mod` 100)
-    xs           = [1..(max length' index')]
-    heap         = Heap.fromAscFoldable xs :: MinHeap Int
-    p1 x         = x <= index'
-    p2 x         = x > index'
-    (xs', heap') = Heap.span p1 heap
-    in
-    xs' == Heap.takeWhile p1 heap
-        && heap' == Heap.dropWhile p1 heap
-        && (xs', heap') == Heap.break p2 heap
-
 listProperty :: [Int] -> Bool
 listProperty xs = let
     xsAsc  = sort xs
