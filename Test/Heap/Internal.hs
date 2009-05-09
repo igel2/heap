@@ -26,6 +26,8 @@ runTests = do
     qc "partition" (partitionProperty testProp :: Heap Char Int -> Bool)
     qc "splitAt" splitAtProperty
     qc "span" spanProperty
+    qc "fromFoldable/toList" (listProperty :: [Char] -> Bool)
+    qc "fromDescFoldable/toAscList" (sortedListProperty :: [Char] -> Bool)
     where
     testProp :: Char -> Int -> Bool
     testProp c i = even i && isLetter c
@@ -110,3 +112,17 @@ spanProperty i n = let
     (a', h) = Heap.span (\x _ -> x <= i') $ fromFoldable (zip ab (repeat ()))
     in
     a == (fmap fst a') && h == fromFoldable (zip b (repeat ()))
+
+listProperty :: (Ord prio) => [prio] -> Bool
+listProperty xs = let
+    list = List.sort xs
+    heap = fromFoldable (zip xs [1..])
+    in
+    list == fmap fst (List.sort (toList heap))
+
+sortedListProperty :: (Ord prio) => [prio] -> Bool
+sortedListProperty xs = let
+    list = List.sort xs
+    heap = fromDescFoldable (zip (reverse list) [1..])
+    in
+    list == fmap fst (toAscList heap)
