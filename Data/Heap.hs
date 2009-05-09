@@ -27,9 +27,6 @@ module Data.Heap
     , HeapItem(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
       -- * Query
     , I.isEmpty, I.size
-#ifdef __DEBUG__
-    , I.rank
-#endif
       -- * Construction
     , I.empty, singleton, insert, I.union, I.unions
       -- * Deconstruction
@@ -63,7 +60,7 @@ singleton = (uncurry I.singleton) . split
 -- | /O(log n)/. Insert a single item into the 'Heap'.
 insert :: (HeapItem pol item) => item -> ManagedHeap pol item
        -> ManagedHeap pol item
-insert h = I.union (singleton h)
+insert = I.union . singleton
 
 -- | /O(1)/ for the head, /O(log n)/ for the tail. Find the item with minimal
 -- associated priority and remove it from the 'Heap' (i. e. find head and tail
@@ -92,7 +89,7 @@ filter p = fst . (partition p)
 -- @h1@ fulfil the predicate @p@, those in @h2@ don't. @'union' h1 h2 = h@.
 partition :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
           -> (ManagedHeap pol item, ManagedHeap pol item)
-partition p = I.partition (splitF p)
+partition = I.partition . splitF
 
 -- | Take the first @n@ items from the 'Heap'.
 take :: (HeapItem pol item) => Int -> ManagedHeap pol item -> [item]

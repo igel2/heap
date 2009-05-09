@@ -43,18 +43,18 @@ type MaxPrioHeap prio val = ManagedHeap FstMaxPolicy (prio, val)
 -- | @'HeapItem' pol item@ is a type class for items that can be stored in a
 -- 'Heap'. A raw @'Heap' prio val@ only provides a minimum priority heap (i. e.
 -- @val@ doesn't influence the ordering of elements and the pair with minimal
--- @prio@ will be extracted first, see there). The job of this class is to
--- translate between arbitrary @item@s and priority-value pairs @('Prio' pol
--- item, 'Val' pol item)@, depending on the policy @pol@ to be used, and thus
--- being able to use 'Heap' not only 'MinPrioHeap', but also as 'MinHeap',
--- 'MaxHeap', 'MaxPrioHeap' or a custom implementation. In short: The job of this
--- class is to deconstruct arbitrary @item@s into a @(prio, val)@ pairs that can
--- be handled by a minimum priority heap.
+-- @prio@ will be extracted first, see 'Heap' documentation). The job of this
+-- class is to translate between arbitrary @item@s and priority-value pairs
+-- @('Prio' pol item, 'Val' pol item)@, depending on the policy @pol@ to be used.
+-- This way, we are able to use 'Heap' not only 'MinPrioHeap', but also as
+-- 'MinHeap', 'MaxHeap', 'MaxPrioHeap' or a custom implementation. In short: The
+-- job of this class is to deconstruct arbitrary @item@s into a @(prio, val)@
+-- pairs that can be handled by a minimum priority heap.
 --
 -- Example: Consider you want to use @'Heap' prio val@ as a @'MaxHeap' a@. You
 -- would have to invert the order of @a@ (e. g. by @newtype InvOrd a = InvOrd a@
--- along with an apropriate 'Ord' instance for it) and then use a @type MaxHeap =
--- 'Heap' (InvOrd a) ()@. You'd also have to translate every @x@ to @(InvOrd x,
+-- along with an apropriate 'Ord' instance for it) and then use a @type MaxHeap a
+-- = 'Heap' (InvOrd a) ()@. You'd also have to translate every @x@ to @(InvOrd x,
 -- ())@ before insertion and back after removal in order to retrieve your
 -- original type @a@.
 --
@@ -64,7 +64,7 @@ type MaxPrioHeap prio val = ManagedHeap FstMaxPolicy (prio, val)
 --
 -- @data 'MaxPolicy'
 --
--- instance (Ord a) => HeapItem MaxPolicy a where
+-- instance ('Ord' a) => 'HeapItem' 'MaxPolicy' a where
 --     newtype 'Prio' 'MaxPolicy' a = MaxP a deriving ('Eq')
 --     type    'Val'  'MaxPolicy' a = ()
 --     'split' x           = (MaxP x, ())
@@ -75,8 +75,9 @@ type MaxPrioHeap prio val = ManagedHeap FstMaxPolicy (prio, val)
 -- @
 --
 -- Where 'MaxPolicy' is a phantom type describing which 'HeapItem' instance is
--- actually meant (we also have 'MinPolicy' for example) and @MaxP@ inverts the
--- ordering of @a@, so that the maximum will be on top of the 'Heap'.
+-- actually meant (e. g. we have to distinguish between 'MinPolicy' and
+-- 'MaxPolicy') and @MaxP@ inverts the ordering of @a@, so that the maximum will
+-- be on top of the 'Heap'.
 --
 -- The conversion functions 'split' and 'merge' have to make sure that
 --
