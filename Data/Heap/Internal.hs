@@ -194,14 +194,13 @@ view heap  = Just (_priority heap, _value heap, union (_left heap) (_right heap)
 -- | Partition the 'Heap' into two. @'partition' p h = (h1, h2)@: All
 -- priority-value pairs in @h1@ fulfil the predicate @p@, those in @h2@ don't.
 -- @'union' h1 h2 = h@.
-partition :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val
+partition :: (Ord prio) => ((prio, val) -> Bool) -> Heap prio val
           -> (Heap prio val, Heap prio val)
 partition _ Empty  = (empty, empty)
 partition f heap
-    | f p v     = (makeT p v l1 r1, union l2 r2)
+    | f (p, v)  = (makeT p v l1 r1, union l2 r2)
     | otherwise = (union l1 r1, makeT p v l2 r2)
-    where p        = _priority heap
-          v        = _value heap
+    where (p, v)   = (_priority heap, _value heap)
           (l1, l2) = partition f (_left heap)
           (r1, r2) = partition f (_right heap)
 {-# INLINE partition #-}
@@ -220,14 +219,14 @@ splitAt n heap
 -- | @'span' p h@: The longest prefix of priority-value pairs of @h@, in
 -- ascending order of priority, that satisfy @p@ and @h@, with those elements
 -- removed.
-span :: (Ord prio) => (prio -> val -> Bool) -> Heap prio val
+span :: (Ord prio) => ((prio, val) -> Bool) -> Heap prio val
      -> ([(prio, val)], Heap prio val)
 span f heap
     = case view heap of
         Nothing         -> ([], empty)
-        Just (p, v, hs) ->
-            if f p v then let (xs, heap') = span f hs in ((p, v):xs, heap')
-                     else ([], heap)
+        Just (p, v, hs) -> let pv = (p, v)
+            in if f pv then let (xs, heap') = span f hs in (pv:xs, heap')
+                       else ([], heap)
 {-# INLINE span #-}
 
 -- | /O(n log n)/. Build a 'Heap' from the given priority-value pairs. Assuming
@@ -265,7 +264,7 @@ toList heap  = let left  = _left heap
 -- | /O(n log n)/. List the priority-value pairs of the 'Heap' in ascending order
 -- of priority.
 toAscList :: (Ord prio) => Heap prio val -> [(prio, val)]
-toAscList = fst . span (\_ _ -> True)
+toAscList = fst . span (const True)
 {-# INLINE toAscList #-}
 
 -- | List the priority-value pairs of the 'Heap' just like 'toAscList' does, but

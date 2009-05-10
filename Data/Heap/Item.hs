@@ -174,7 +174,7 @@ instance (Show prio) => Show (Prio FstMaxPolicy (prio, val)) where
     show (FMaxP x) = show x
 
 -- | 'split' a function on @item@s to one on priority-value pairs.
-splitF :: (HeapItem pol item) => (item -> a) -> Prio pol item -> Val pol item -> a
-splitF f p v = f $ merge (p, v)
+splitF :: (HeapItem pol item) => (item -> a) -> (Prio pol item, Val pol item) -> a
+splitF f pv = f (merge pv)
 {-# INLINE splitF #-}
---{-# RULES "splitF/merge" forall f x. splitF f p v where (p, v) = split x = f x #-}
+{-# RULES "splitF/split" forall f x. splitF f (split x) = f x #-}
