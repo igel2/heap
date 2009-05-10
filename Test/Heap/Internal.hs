@@ -33,9 +33,8 @@ runTests = do
     testProp c i = even i && isLetter c
 
 instance (Arbitrary prio, Arbitrary val, Ord prio) => Arbitrary (Heap prio val) where
-    arbitrary = do
-        len <- choose (0, 100)
-        fmap fromFoldable $ vector len
+    arbitrary = fmap (fromFoldable . take 100) arbitrary
+    shrink    = fmap fromFoldable . shrink . toList
 
 leftistHeapProperty :: (Ord prio) => Heap prio val -> Bool
 leftistHeapProperty Empty = True

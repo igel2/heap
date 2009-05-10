@@ -75,9 +75,9 @@ type MaxPrioHeap prio val = ManagedHeap FstMaxPolicy (prio, val)
 -- @
 --
 -- Where 'MaxPolicy' is a phantom type describing which 'HeapItem' instance is
--- actually meant (e. g. we have to distinguish between 'MinPolicy' and
--- 'MaxPolicy') and @MaxP@ inverts the ordering of @a@, so that the maximum will
--- be on top of the 'Heap'.
+-- actually meant (e. g. we have to distinguish between 'MinHeap' and 'MaxHeap',
+-- which is done via 'MinPolicy' and 'MaxPolicy', respectively) and @MaxP@
+-- inverts the ordering of @a@, so that the maximum will be on top of the 'Heap'.
 --
 -- The conversion functions 'split' and 'merge' have to make sure that
 --
@@ -175,5 +175,6 @@ instance (Show prio) => Show (Prio FstMaxPolicy (prio, val)) where
 
 -- | 'split' a function on @item@s to one on priority-value pairs.
 splitF :: (HeapItem pol item) => (item -> a) -> Prio pol item -> Val pol item -> a
-splitF f p v = let x = merge (p, v) in f x
+splitF f p v = f $ merge (p, v)
 {-# INLINE splitF #-}
+--{-# RULES "splitF/merge" forall f x. splitF f p v where (p, v) = split x = f x #-}

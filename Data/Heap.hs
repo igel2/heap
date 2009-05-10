@@ -26,7 +26,7 @@ module Data.Heap
       -- ** Ordering strategies
     , HeapItem(..), MinPolicy, MaxPolicy, FstMinPolicy, FstMaxPolicy
       -- * Query
-    , I.isEmpty, I.size
+    , I.isEmpty, null, I.size
       -- * Construction
     , I.empty, singleton, insert, I.union, I.unions
       -- * Deconstruction
@@ -51,7 +51,11 @@ import Data.Heap.Item
 import Data.Heap.Internal ( Heap )
 import qualified Data.Heap.Internal as I
 import Prelude hiding
-    ( break, drop, dropWhile, filter, span, splitAt, take, takeWhile )
+    ( break, drop, dropWhile, filter, null, span, splitAt, take, takeWhile )
+
+-- | /O(1)/. Is the 'Heap' empty?
+null :: Heap prio val -> Bool
+null = I.isEmpty
 
 -- | /O(1)/. Create a singleton 'Heap'.
 singleton :: (HeapItem pol item) => item -> ManagedHeap pol item

@@ -106,24 +106,20 @@ instance (Ord prio) => Foldable (Heap prio) where
 isEmpty :: Heap prio val -> Bool
 isEmpty Empty = True
 isEmpty _     = False
-{-# INLINE isEmpty #-}
 
 -- | /O(1)/. Find the rank of a 'Heap' (the length of its right spine).
 rank :: Heap prio val -> Int
 rank Empty = 0
 rank heap  = _rank heap
-{-# INLINE rank #-}
 
 -- | /O(1)/. The total number of elements in the 'Heap'.
 size :: Heap prio val -> Int
 size Empty = 0
 size heap  = _size heap
-{-# INLINE size #-}
 
 -- | /O(1)/. Construct an empty 'Heap'.
 empty :: Heap prio val
 empty = Empty
-{-# INLINE empty #-}
 
 -- | /O(1)/. Create a singleton 'Heap'.
 singleton :: prio -> val -> Heap prio val
@@ -183,11 +179,9 @@ unions heaps = case tournamentFold' heaps of
     []  -> empty
     [h] -> h
     hs  -> unions hs
-    where
-    tournamentFold' :: (Monoid m) => [m] -> [m]
-    tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
-    tournamentFold' xs         = xs
-    {-# INLINE tournamentFold' #-}
+    where tournamentFold' :: (Monoid m) => [m] -> [m]
+          tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
+          tournamentFold' xs         = xs
 
 -- | /O(log n)/ for the tail, /O(1)/ for the head. Find the priority-value pair
 -- with minimal priority and delete it from the 'Heap' (i. e. find head and tail
