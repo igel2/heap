@@ -82,4 +82,4 @@ priorityValueProperty f p v = p == fst (split (merge (p, v)))
 
 splitFProperty :: (HeapItem pol item, Eq a)
     => (item -> a) -> Prio pol item -> Val pol item -> Bool
-splitFProperty f p v = f (merge (p, v)) == splitF f p v
+splitFProperty f p v = f (merge (p, v)) == splitF f (p, v)

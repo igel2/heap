@@ -83,11 +83,11 @@ singletonProperty p v = let
 
 partitionProperty :: (Ord prio, Ord val) => (prio -> val -> Bool) -> Heap prio val -> Bool
 partitionProperty p heap = let
-    (yes,  no)  = partition p heap
+    (yes,  no)  = partition (uncurry p) heap
     (yes', no') = List.partition (uncurry p) (toList heap)
     in
-    (heap, empty) == partition (\_ _ -> True) heap
-        && (empty, heap) == partition (\_ _ -> False) heap
+    (heap, empty) == partition (const True) heap
+        && (empty, heap) == partition (const False) heap
         && yes == fromFoldable yes'
         && no == fromFoldable no'
         && yes `union` no == heap -- nothing gets lost
@@ -108,7 +108,7 @@ spanProperty i n = let
     n'      = n `mod` 100
     ab      = [1..n']
     (a, b)  = List.span (<= i') ab
-    (a', h) = Heap.span (\x _ -> x <= i') $ fromFoldable (zip ab (repeat ()))
+    (a', h) = Heap.span ((<=i') . fst) $ fromFoldable (zip ab (repeat ()))
     in
     a == (fmap fst a') && h == fromFoldable (zip b (repeat ()))
 
