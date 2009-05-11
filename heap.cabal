@@ -16,7 +16,7 @@ Maintainer:          Stephan Friedrichs (deduktionstheorem at web dot de)
 
 Build-Type:          Simple
 Cabal-Version:       >= 1.2
-Extra-Source-Files:  Test.lhs, Test/Heap.hs
+--Extra-Source-Files:  Test.lhs, Test/Heap.hs
 Tested-With:         GHC
 
 Library

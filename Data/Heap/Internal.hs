@@ -11,11 +11,7 @@
 -- the priority does.
 module Data.Heap.Internal
     ( -- * A basic heap type
-#ifdef __DEBUG__
       Heap(..)
-#else
-      Heap
-#endif
       -- * Query
     , isEmpty, rank, size
       -- * Construction

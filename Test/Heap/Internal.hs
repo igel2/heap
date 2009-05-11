@@ -1,5 +1,6 @@
 module Test.Heap.Internal
     ( runTests
+    , leftistHeapProperty
     ) where
 
 import Data.Char
