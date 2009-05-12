@@ -1,21 +1,30 @@
----- | A flexible implementation of min-, max- and custom-priority heaps based on
----- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
----- Structures\", Cambridge University Press, 1998, chapter 3.1.
-----
----- There are different flavours of 'Heap's, each of them following a different
----- strategy when ordering its elements:
-----
-----  * Choose 'MinHeap' or 'MaxHeap' if you need a simple minimum or maximum heap
-----    (which always keeps the minimum/maximum element at the head of the 'Heap').
-----
-----  * If you wish to manually annotate a value with a priority, e. g. an @IO ()@
-----    action with an 'Int' use 'MinPrioHeap' or 'MaxPrioHeap'. They manage
-----    @(priority, value)@ tuples so that only the priority (and not the value)
-----    influences the order of elements.
-----
-----  * If you still need something different, define a custom order for the heap
-----    elements by implementing a 'HeapPolicy' and let the maintainer know,
-----    what's missing.
+-- | A flexible implementation of min-, max-, min-priority, max-priority and
+-- custom-priority heaps based on the leftist-heaps from Chris Okasaki's book
+-- \"Purely Functional Data Structures\", Cambridge University Press, 1998,
+-- chapter 3.1.
+--
+-- There are different flavours of 'Heap's, each of them following a different
+-- strategy when ordering its elements:
+--
+--  * Choose 'MinHeap' or 'MaxHeap' if you need a simple minimum or maximum heap
+--    (which always keeps the minimum/maximum element at the head of the 'Heap').
+--
+--  * If you wish to manually annotate a value with a priority, e. g. an @IO ()@
+--    action with an 'Int' use 'MinPrioHeap' or 'MaxPrioHeap'. They manage
+--    @(prio, val)@ tuples so that only the priority (and not the value)
+--    influences the order of elements.
+--
+--  * If you still need something different, define a custom order for the heap
+--    elements by implementing an instance of 'HeapItem' and let the maintainer
+--    know what's missing.
+--
+-- All sorts of heaps mentioned above ('MinHeap', 'MaxHeap', 'MinPrioHeap' and
+-- 'MaxPrioHeap') are built on the same underlying type: @'Heap' prio val@. It is
+-- a simple minimum priority heap. The trick is, that you never insert @(prio,
+-- val)@ pairs directly: You only insert an \"external representation\", usually
+-- called @item@, and an appropriate 'HeapItem' instance is used to 'split' the
+-- @item@ to a @(prio, val)@ pair. For details refer to the documentation of
+-- 'HeapItem'.
 module Data.Heap
     ( -- * Types
       -- ** Various heap flavours
@@ -38,8 +47,7 @@ module Data.Heap
       -- ** Foldable
     , fromFoldable, fromAscFoldable, fromDescFoldable
       -- ** List
-      -- | Note that there are no @fromList@ functions, because they're implied
-      -- by 'fromFoldable' and friends (@instance Foldable []@).
+      -- $foldable_remarks
     , toList, toAscList, toDescList
     ) where
 
@@ -128,6 +136,10 @@ span p heap = let (xs, heap') = I.span (splitF p) heap in (fmap merge xs, heap')
 break :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item
       -> ([item], ManagedHeap pol item)
 break p = span (not . p)
+
+-- $foldable_remarks
+-- Note that there are no @fromList@ functions, because they're implied by
+-- 'fromFoldable' and friends (@instance Foldable []@).
 
 -- | /O(n log n)/. Build a 'Heap' from the given items. Assuming you have a
 -- sorted 'Foldable', you probably want to use 'fromDescFoldable' or
