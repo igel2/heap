@@ -225,9 +225,7 @@ span f heap
                        else ([], heap)
 {-# INLINE span #-}
 
--- | /O(n log n)/. Build a 'Heap' from the given priority-value pairs. Assuming
--- you have a sorted 'Foldable', you probably want to use 'fromDescFoldable' or
--- 'fromAscFoldable', they are faster than this function.
+-- | /O(n log n)/. Build a 'Heap' from the given priority-value pairs.
 fromFoldable :: (Foldable f, Ord prio) => f (prio, val) -> Heap prio val
 fromFoldable xs = let
     list = Foldable.toList xs
@@ -237,8 +235,7 @@ fromFoldable xs = let
 {-# SPECIALISE fromFoldable :: (Ord prio) => [(prio, val)] -> Heap prio val #-}
 
 -- | /O(n)/. Create a 'Heap' from a 'Foldable' providing its priority-value pairs
--- in descending order of priority. Prefer this function over 'fromFoldable' and
--- 'fromAscFoldable', as it is faster.
+-- in descending order of priority.
 --
 -- /The precondition is not checked/.
 fromDescFoldable :: (Foldable f, Ord prio) => f (prio, val) -> Heap prio val
