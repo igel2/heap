@@ -20,8 +20,8 @@ import Data.Binary ( Binary )
 import Data.Heap.Internal ( Heap )
 import Text.Read ( Read(..) )
 
--- | A 'Heap' which uses the 'HeapItem' instance of @pol item@ to organise its
--- elements.
+-- | This type alias is an abbreviation for a 'Heap' which uses the 'HeapItem'
+-- instance of @pol item@ to organise its elements.
 type ManagedHeap pol item = Heap (Prio pol item) (Val pol item)
 
 -- | A 'Heap' which will always extract the minimum first.
