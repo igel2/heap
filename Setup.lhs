@@ -1,6 +1,6 @@
 #! /usr/bin/env runhaskell
 
-> module Main where
+> module Main ( main ) where
 >
 > import Distribution.Simple
 >

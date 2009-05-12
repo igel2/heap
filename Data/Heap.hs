@@ -1,5 +1,3 @@
---{-# LANGUAGE CPP, DeriveDataTypeable, EmptyDataDecls, FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables #-}
---
 ---- | A flexible implementation of min-, max- and custom-priority heaps based on
 ---- the leftist-heaps from Chris Okasaki's book \"Purely Functional Data
 ---- Structures\", Cambridge University Press, 1998, chapter 3.1.

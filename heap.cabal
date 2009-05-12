@@ -29,10 +29,12 @@ Library
     , Data.Heap.Item
   GHC-Options:       -Wall -fwarn-tabs
   Extensions:
-      CPP
---    , EmptyDataDecls
-    , DeriveDataTypeable
---    , FlexibleInstances
---    , MultiParamTypeClasses
+      DeriveDataTypeable
+    , EmptyDataDecls
+    , FlexibleContexts
+    , FlexibleInstances
+    , GeneralizedNewtypeDeriving
+    , MultiParamTypeClasses
     , ScopedTypeVariables
+    , TypeFamilies
 

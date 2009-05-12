@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveDataTypeable, ScopedTypeVariables #-}
 
 -- | This module provides a simple leftist-heap implementation based on Chris
 -- Okasaki's book \"Purely Functional Data Structures\", Cambridge University
