@@ -26,7 +26,7 @@ Tested-With:         GHC
 
 Library
   Build-Depends:
-      base
+      base >= 3
     , binary >= 0.5 && < 1
   Exposed-Modules:
       Data.Heap
