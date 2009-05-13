@@ -1,22 +1,11 @@
 #!/bin/bash
 
-case $1 in
-run)	rm -f Tests.tix
-	rm -f Data/*.hi Data/*.o
-	rm -f Test/*.hi Test/*.o
-	rm *.hi *.o
-	ghc -fhpc Tests.lhs --make
-	./Tests
-	hpc report Tests
-	hpc markup Tests
-	;;
-clean)	rm -f Tests.tix
-	rm -f Data/*.hi Data/*.o
-	rm -f Test/*.hi Test/*.o
-	rm -f Tests *.hi *.o
-	rm -f hpc_index*.html
-	rm -f *.hs.html
-	rm -rf .hpc
-	;;
-esac
+# funkioniert nicht:
+
+mkdir -p dist2/hpc
+ghc --make -fhpc -outputdir dist2 -o dist2/testbinary Test
+dist2/testbinary
+
+hpc report --srcdir=. --hpcdir=dist2/hpc --decl-list dist2/testbinary dist2/testbinary.tix Data.Heap Data.Heap.Internal Data.Heap.Item
+#hpc report --srcdir=.. --fun-entry-count testbinary ../testbinary.tix Data.Heap Data.Heap.Internal Data.Heap.Item
 
