@@ -4,10 +4,11 @@ module Test.Heap
     ( runTests
     ) where
 
+import Data.Char
 import Data.Heap
-import Data.List hiding ( null )
+import Data.List hiding ( null, partition, splitAt, union )
 import Data.Ord
-import Prelude hiding ( null )
+import Prelude hiding ( null, splitAt )
 import Test.Heap.Common
 import Test.Heap.Internal hiding ( runTests )
 import Test.Heap.Item hiding ( runTests )
@@ -23,6 +24,19 @@ runTests = do
     qc "view for MaxHeap" (headTailViewProperty :: MaxHeap Int -> Bool)
     qc "view for MinPrioHeap" (headTailViewProperty :: MinPrioHeap Int Char -> Bool)
     qc "view for MaxPrioHeap" (headTailViewProperty :: MaxPrioHeap Int Char -> Bool)
+
+    qc "partition for MinHeap" (partitionProperty even :: MinHeap Int -> Bool)
+    qc "partition for MaxHeap" (partitionProperty even :: MaxHeap Int -> Bool)
+    qc "partition for MinPrioHeap" (partitionProperty testProp :: MinPrioHeap Int Char -> Bool)
+    qc "partition for MaxPrioHeap" (partitionProperty testProp :: MaxPrioHeap Int Char -> Bool)
+
+    qc "splitAt for MinHeap" (splitAtProperty :: Int -> MinHeap Int -> Bool)
+    qc "splitAt for MaxHeap" (splitAtProperty :: Int -> MaxHeap Int -> Bool)
+    qc "splitAt for MinPrioHeap" (splitAtProperty :: Int -> MinPrioHeap Int Char -> Bool)
+    qc "splitAt for MaxPrioHeap" (splitAtProperty :: Int -> MaxPrioHeap Int Char -> Bool)
+    where
+    testProp :: (Int, Char) -> Bool
+    testProp (i, c) = even i /= isLetter c
 
 listProperty :: (HeapItem pol item, Ord (Val pol item)) => ManagedHeap pol item -> Bool
 listProperty heap = let
@@ -45,5 +59,20 @@ headTailViewProperty heap = if null heap
         && Nothing == viewHead heap
         && Nothing == viewTail heap
     else case view heap of
-    	Just (h, heap') -> viewHead heap == Just h && viewTail heap == Just heap'
-    	Nothing         -> False
+        Just (h, heap') -> viewHead heap == Just h && viewTail heap == Just heap'
+        Nothing         -> False
+
+partitionProperty :: (HeapItem pol item, Ord (Val pol item))
+    => (item -> Bool) -> ManagedHeap pol item -> Bool
+partitionProperty p heap = let
+    (yes, no) = partition p heap
+    in and (fmap p (toList yes))
+        && and (fmap (not . p) (toList no))
+        && heap == yes `union` no
+
+splitAtProperty :: (HeapItem pol item, Ord (Val pol item))
+    => Int -> ManagedHeap pol item -> Bool
+splitAtProperty n heap = let
+    (before, after) = splitAt n heap
+    in n < 0 || length before == n || isEmpty after
+        && heap == fromAscFoldable before `union` after
