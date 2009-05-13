@@ -6,9 +6,9 @@ module Test.Heap
 
 import Data.Char
 import Data.Heap
-import Data.List hiding ( null, partition, splitAt, union )
+import Data.List hiding ( break, null, partition, span, splitAt, union )
 import Data.Ord
-import Prelude hiding ( null, splitAt )
+import Prelude hiding ( break, null, span, splitAt )
 import Test.Heap.Common
 import Test.Heap.Internal hiding ( runTests )
 import Test.Heap.Item hiding ( runTests )
@@ -34,6 +34,11 @@ runTests = do
     qc "splitAt for MaxHeap" (splitAtProperty :: Int -> MaxHeap Int -> Bool)
     qc "splitAt for MinPrioHeap" (splitAtProperty :: Int -> MinPrioHeap Int Char -> Bool)
     qc "splitAt for MaxPrioHeap" (splitAtProperty :: Int -> MaxPrioHeap Int Char -> Bool)
+
+    qc "span for MinHeap" (spanProperty even :: MinHeap Int -> Bool)
+    qc "span for MaxHeap" (spanProperty even :: MaxHeap Int -> Bool)
+    qc "span for MinPrioHeap" (spanProperty testProp :: MinPrioHeap Int Char -> Bool)
+    qc "span for MaxPrioHeap" (spanProperty testProp :: MaxPrioHeap Int Char -> Bool)
     where
     testProp :: (Int, Char) -> Bool
     testProp (i, c) = even i /= isLetter c
@@ -76,3 +81,12 @@ splitAtProperty n heap = let
     (before, after) = splitAt n heap
     in n < 0 || length before == n || isEmpty after
         && heap == fromAscFoldable before `union` after
+
+spanProperty :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item -> Bool
+spanProperty p heap = let
+    (yes, heap') = span p heap
+    (no, heap'') = break p heap
+    in and (fmap p yes)
+        && and (fmap (not . p) no)
+        && maybe True (not . p) (viewHead heap')
+        && maybe True p (viewHead heap'')
