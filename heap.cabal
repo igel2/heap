@@ -1,7 +1,6 @@
 
 Name:                heap
 Version:             1.0.0
-Stability:           beta
 
 Category:            Data Structures
 Synopsis:            Heaps in Haskell
@@ -26,7 +25,7 @@ Tested-With:         GHC
 
 Library
   Build-Depends:
-      base >= 3
+      base >= 3 && < 5
     , binary >= 0.5 && < 1
   Exposed-Modules:
       Data.Heap
