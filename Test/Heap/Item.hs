@@ -31,10 +31,10 @@ runTests = do
         :: Prio FstMaxPolicy (Int, Char) -> Prio FstMaxPolicy (Int, Char)
         -> Prio FstMaxPolicy (Int, Char) -> Bool)
 
-    qc "read/show for MinPolicy" (readShowProperty :: Prio MinPolicy Int -> Bool)
-    qc "read/show for MaxPolicy" (readShowProperty :: Prio MaxPolicy Int -> Bool)
-    qc "read/show for FstMinPolicy" (readShowProperty :: Prio FstMinPolicy (Int, Char) -> Bool)
-    qc "read/show for FstMaxPolicy" (readShowProperty :: Prio FstMaxPolicy (Int, Char) -> Bool)
+    qc "read/show for MinPolicy" (readShowProperty :: [Prio MinPolicy Int] -> Bool)
+    qc "read/show for MaxPolicy" (readShowProperty :: [Prio MaxPolicy Int] -> Bool)
+    qc "read/show for FstMinPolicy" (readShowProperty :: [Prio FstMinPolicy (Int, Char)] -> Bool)
+    qc "read/show for FstMaxPolicy" (readShowProperty :: [Prio FstMaxPolicy (Int, Char)] -> Bool)
 
     qc "Binary for MinPolicy" (binaryProperty :: Prio MinPolicy Int -> Bool)
     qc "Binary for MaxPolicy" (binaryProperty :: Prio MaxPolicy Int -> Bool)

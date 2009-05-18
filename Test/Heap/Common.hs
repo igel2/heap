@@ -34,8 +34,9 @@ ordProperty x y z = let
         && _min <= x && _min <= y && _min <= z
         && _max >= x && _max >= y && _max >= z
 
-readShowProperty :: (Read a, Show a, Eq a) => a -> Bool
+readShowProperty :: (Read a, Show a, Eq a) => [a] -> Bool
 readShowProperty x = x == read (show x)
+    && (null x || head x == read (show (head x)))
 
 binaryProperty :: (Binary a, Eq a) => a -> Bool
 binaryProperty x = x == decode (encode x)

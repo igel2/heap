@@ -14,7 +14,7 @@ runTests = do
     qc "Eq" (eqProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
     qc "Ord" (ordProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
     qc "leftist heap" (leftistHeapProperty :: Heap Int Char -> Bool)
-    qc "read/show" (readShowProperty :: Heap Int Char -> Bool)
+    qc "read/show" (readShowProperty :: [Heap Int Char] -> Bool)
     qc "Binary" (binaryProperty :: Heap Int Char -> Bool)
     qc "Monoid" (monoidProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
     qc "union" (unionProperty :: Heap Int Char -> Heap Int Char -> Bool)
