@@ -43,7 +43,7 @@ runTests = do
     testProp :: (Int, Char) -> Bool
     testProp (i, c) = even i /= isLetter c
 
-listProperty :: (HeapItem pol item, Ord (Val pol item)) => ManagedHeap pol item -> Bool
+listProperty :: (HeapItem pol item, Ord (Val pol item)) => Heap pol item -> Bool
 listProperty heap = let
     pairs = toList heap
     asc   = toAscList heap
@@ -57,7 +57,7 @@ listProperty heap = let
         && heap == heap4
 
 headTailViewProperty :: (HeapItem pol item, Eq item, Ord (Val pol item))
-    => ManagedHeap pol item -> Bool
+    => Heap pol item -> Bool
 headTailViewProperty heap = if null heap
     then isEmpty heap
         && Nothing == view heap
@@ -68,7 +68,7 @@ headTailViewProperty heap = if null heap
         Nothing         -> False
 
 partitionProperty :: (HeapItem pol item, Ord (Val pol item))
-    => (item -> Bool) -> ManagedHeap pol item -> Bool
+    => (item -> Bool) -> Heap pol item -> Bool
 partitionProperty p heap = let
     (yes, no) = partition p heap
     in and (fmap p (toList yes))
@@ -76,13 +76,13 @@ partitionProperty p heap = let
         && heap == yes `union` no
 
 splitAtProperty :: (HeapItem pol item, Ord (Val pol item))
-    => Int -> ManagedHeap pol item -> Bool
+    => Int -> Heap pol item -> Bool
 splitAtProperty n heap = let
     (before, after) = splitAt n heap
     in n < 0 || length before == n || isEmpty after
         && heap == fromAscFoldable before `union` after
 
-spanProperty :: (HeapItem pol item) => (item -> Bool) -> ManagedHeap pol item -> Bool
+spanProperty :: (HeapItem pol item) => (item -> Bool) -> Heap pol item -> Bool
 spanProperty p heap = let
     (yes, heap') = span p heap
     (no, heap'') = break p heap

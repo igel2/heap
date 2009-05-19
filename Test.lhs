@@ -15,8 +15,8 @@
 >     quickCheckWith (Args Nothing 1 1 1) $ expectFailure (assert False True)
 >     putStrLn ""
 >
->     putStrLn "Tests for Data.Heap.Internal:" >> Internal.runTests >> putStrLn ""
->     putStrLn "Tests for Data.Heap.Item:"     >> Item.runTests     >> putStrLn ""
->     putStrLn "Tests for Data.Heap:"          >> Heap.runTests
+>     putStrLn "Tests for Data.HeapT.Internal:" >> Internal.runTests >> putStrLn ""
+>     putStrLn "Tests for Data.HeapT.Item:"     >> Item.runTests     >> putStrLn ""
+>     putStrLn "Tests for Data.HeapT:"          >> Heap.runTests
 >
 

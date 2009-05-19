@@ -11,20 +11,20 @@ import Test.QuickCheck
 
 runTests :: IO ()
 runTests = do
-    qc "Eq" (eqProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
-    qc "Ord" (ordProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
-    qc "leftist heap" (leftistHeapProperty :: Heap Int Char -> Bool)
-    qc "read/show" (readShowProperty :: [Heap Int Char] -> Bool)
-    qc "Binary" (binaryProperty :: Heap Int Char -> Bool)
-    qc "Monoid" (monoidProperty :: Heap Int Char -> Heap Int Char -> Heap Int Char -> Bool)
-    qc "union" (unionProperty :: Heap Int Char -> Heap Int Char -> Bool)
-    qc "Functor" (functorProperty (subtract 1000) (*42) :: Heap Char Int -> Bool)
-    qc "fmap" (fmapProperty (subtract 1000) :: Heap Char Int -> Bool)
-    qc "Foldable" (foldableProperty :: Heap Char Int -> Bool)
+    qc "Eq" (eqProperty :: HeapT Int Char -> HeapT Int Char -> HeapT Int Char -> Bool)
+    qc "Ord" (ordProperty :: HeapT Int Char -> HeapT Int Char -> HeapT Int Char -> Bool)
+    qc "leftist heap" (leftistHeapProperty :: HeapT Int Char -> Bool)
+    qc "read/show" (readShowProperty :: [HeapT Int Char] -> Bool)
+    qc "Binary" (binaryProperty :: HeapT Int Char -> Bool)
+    qc "Monoid" (monoidProperty :: HeapT Int Char -> HeapT Int Char -> HeapT Int Char -> Bool)
+    qc "union" (unionProperty :: HeapT Int Char -> HeapT Int Char -> Bool)
+    qc "Functor" (functorProperty (subtract 1000) (*42) :: HeapT Char Int -> Bool)
+    qc "fmap" (fmapProperty (subtract 1000) :: HeapT Char Int -> Bool)
+    qc "Foldable" (foldableProperty :: HeapT Char Int -> Bool)
     qc "size" sizeProperty
     qc "view" viewProperty
     qc "singleton" (singletonProperty :: Char -> Int -> Bool)
-    qc "partition" (partitionProperty testProp :: Heap Char Int -> Bool)
+    qc "partition" (partitionProperty testProp :: HeapT Char Int -> Bool)
     qc "splitAt" splitAtProperty
     qc "span" spanProperty
     qc "fromFoldable/toList" (listProperty :: [Char] -> Bool)
@@ -33,11 +33,11 @@ runTests = do
     testProp :: Char -> Int -> Bool
     testProp c i = even i && isLetter c
 
-instance (Arbitrary prio, Arbitrary val, Ord prio) => Arbitrary (Heap prio val) where
+instance (Arbitrary prio, Arbitrary val, Ord prio) => Arbitrary (HeapT prio val) where
     arbitrary = fmap (fromFoldable . take 100) arbitrary
     shrink    = fmap fromFoldable . shrink . toList
 
-leftistHeapProperty :: (Ord prio) => Heap prio val -> Bool
+leftistHeapProperty :: (Ord prio) => HeapT prio val -> Bool
 leftistHeapProperty Empty = True
 leftistHeapProperty heap  =
     (maybe True (\(p, _, _) -> p >= _priority heap) (view (_left heap)))
@@ -48,20 +48,20 @@ leftistHeapProperty heap  =
         && leftistHeapProperty (_left heap)
         && leftistHeapProperty (_right heap)
 
-unionProperty :: (Ord prio, Ord val) => Heap prio val -> Heap prio val -> Bool
+unionProperty :: (Ord prio, Ord val) => HeapT prio val -> HeapT prio val -> Bool
 unionProperty a b = let ab = a `union` b
     in leftistHeapProperty ab && size ab == size a + size b
         && ab == ab `union` empty
         && ab == empty `union` ab
         && a == unions (fmap (uncurry singleton) (toList a))
 
-fmapProperty :: (Ord prio) => (val -> val) -> Heap prio val -> Bool
+fmapProperty :: (Ord prio) => (val -> val) -> HeapT prio val -> Bool
 fmapProperty f = leftistHeapProperty . fmap f
 
 sizeProperty :: Int -> Bool
 sizeProperty n = let
     n' = abs n `mod` 100
-    h  = fromFoldable (zip [1..n'] (repeat ())) :: Heap Int ()
+    h  = fromFoldable (zip [1..n'] (repeat ())) :: HeapT Int ()
     in
     size h == n' && if n' == 0 then isEmpty h else not (isEmpty h)
 
@@ -82,7 +82,7 @@ singletonProperty p v = let
     in
     leftistHeapProperty heap && size heap == 1 && view heap == Just (p, v, empty)
 
-partitionProperty :: (Ord prio, Ord val) => (prio -> val -> Bool) -> Heap prio val -> Bool
+partitionProperty :: (Ord prio, Ord val) => (prio -> val -> Bool) -> HeapT prio val -> Bool
 partitionProperty p heap = let
     (yes,  no)  = partition (uncurry p) heap
     (yes', no') = List.partition (uncurry p) (toList heap)
