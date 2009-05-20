@@ -49,17 +49,18 @@ data HeapT prio val
            , _left     :: !(HeapT prio val)   -- ^ Left subtree.
            , _right    :: !(HeapT prio val)   -- ^ Right subtree.
            } -- ^ A tree node of a non-empty 'HeapT'.
-    deriving ( Typeable )
+    deriving (Typeable)
 
 instance (Read prio, Read val, Ord prio) => Read (HeapT prio val) where
     readPrec     = parens $ prec 10 $ do
-      Ident "fromList" <- lexP
-      xs               <- readPrec
+      Ident "fromFoldable" <- lexP
+      xs                   <- readPrec
       return ((fromFoldable :: [(prio, val)] -> HeapT prio val) xs)
     readListPrec = readListPrecDefault
 
 instance (Show prio, Show val) => Show (HeapT prio val) where
-    show = ("fromList " ++) . show . toList
+    showsPrec d heap = showParen (d > 10)
+      $ showString "fromFoldable " . (showsPrec 11 (toList heap))
 
 instance (Ord prio, Ord val) => Eq (HeapT prio val) where
     heap1 == heap2 = size heap1 == size heap2 && EQ == compare heap1 heap2
