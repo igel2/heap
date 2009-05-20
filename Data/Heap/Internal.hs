@@ -28,7 +28,6 @@ module Data.Heap.Internal
     ) where
 
 import Control.Exception ( assert )
-import Data.Binary ( Binary(..) )
 import Data.Foldable ( Foldable(..), foldl' )
 import qualified Data.Foldable as Foldable ( toList )
 import Data.List ( groupBy, sortBy )
@@ -67,10 +66,6 @@ instance (Ord prio, Ord val) => Eq (HeapT prio val) where
 
 instance (Ord prio, Ord val) => Ord (HeapT prio val) where
     compare = comparing toPairAscList
-
-instance (Binary prio, Binary val, Ord prio) => Binary (HeapT prio val) where
-    put = put . reverse . toAscList
-    get = fmap (fromDescFoldable :: [(prio, val)] -> HeapT prio val) get
 
 instance (Ord prio) => Monoid (HeapT prio val) where
     mempty  = empty
@@ -224,7 +219,7 @@ fromFoldable xs = let
     in heap
 {-# INLINE fromFoldable #-}
 {-# SPECIALISE fromFoldable :: (Ord prio) => [(prio, val)] -> HeapT prio val #-}
---fromFoldable (list::[a]) = fromDescFoldable $ sortBy (flip (comparing fst)) list
+--TODO fromFoldable (list::[a]) = fromDescFoldable $ sortBy (flip (comparing fst)) list
 
 -- | /O(n)/. Create a 'HeapT' from a 'Foldable' providing its priority-value pairs
 -- in descending order of priority.

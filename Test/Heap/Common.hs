@@ -2,7 +2,6 @@ module Test.Heap.Common
     ( qc
     , eqProperty, ordProperty
     , readShowProperty
-    , binaryProperty
     , monoidProperty
     , functorProperty
     , foldableProperty
@@ -37,9 +36,6 @@ ordProperty x y z = let
 readShowProperty :: (Read a, Show a, Eq a) => [a] -> Bool
 readShowProperty x = x == read (show x)
     && (null x || head x == read (show (head x)))
-
-binaryProperty :: (Binary a, Eq a) => a -> Bool
-binaryProperty x = x == decode (encode x)
 
 monoidProperty :: (Monoid m, Eq m) => m -> m -> m -> Bool
 monoidProperty m1 m2 m3 = let

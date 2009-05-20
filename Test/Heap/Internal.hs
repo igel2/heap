@@ -15,7 +15,6 @@ runTests = do
     qc "Ord" (ordProperty :: HeapT Int Char -> HeapT Int Char -> HeapT Int Char -> Bool)
     qc "leftist heap" (leftistHeapProperty :: HeapT Int Char -> Bool)
     qc "read/show" (readShowProperty :: [HeapT Int Char] -> Bool)
-    qc "Binary" (binaryProperty :: HeapT Int Char -> Bool)
     qc "Monoid" (monoidProperty :: HeapT Int Char -> HeapT Int Char -> HeapT Int Char -> Bool)
     qc "union" (unionProperty :: HeapT Int Char -> HeapT Int Char -> Bool)
     qc "Functor" (functorProperty (subtract 1000) (*42) :: HeapT Char Int -> Bool)

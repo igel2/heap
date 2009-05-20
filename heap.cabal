@@ -24,9 +24,7 @@ Extra-Source-Files:
 Tested-With:         GHC
 
 Library
-  Build-Depends:
-      base >= 3 && < 5
-    , binary >= 0.5 && < 1
+  Build-Depends:     base >= 3 && < 5
   Exposed-Modules:
       Data.Heap
   Other-Modules:
@@ -38,7 +36,6 @@ Library
     , EmptyDataDecls
     , FlexibleContexts
     , FlexibleInstances
-    , GeneralizedNewtypeDeriving
     , MultiParamTypeClasses
     , ScopedTypeVariables
     , TypeFamilies

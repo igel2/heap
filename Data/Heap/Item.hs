@@ -1,5 +1,5 @@
 {-# LANGUAGE EmptyDataDecls, FlexibleContexts, FlexibleInstances
-  , GeneralizedNewtypeDeriving, MultiParamTypeClasses, TypeFamilies
+  , MultiParamTypeClasses, TypeFamilies
   #-}
 
 -- | This module provides the 'HeapItem' type family along with necessary
@@ -16,7 +16,6 @@ module Data.Heap.Item
     , splitF
     ) where
 
-import Data.Binary ( Binary )
 import Data.Heap.Internal ( HeapT )
 import Text.Read ( Read(..) )
 
@@ -103,7 +102,7 @@ class (Ord (Prio pol item)) => HeapItem pol item where
 data MinPolicy
 
 instance (Ord a) => HeapItem MinPolicy a where
-    newtype Prio MinPolicy a = MinP a deriving (Binary, Eq, Ord)
+    newtype Prio MinPolicy a = MinP a deriving (Eq, Ord)
     type    Val  MinPolicy a = ()
 
     split x           = (MinP x, ())
@@ -120,7 +119,7 @@ instance (Show a) => Show (Prio MinPolicy a) where
 data MaxPolicy
 
 instance (Ord a) => HeapItem MaxPolicy a where
-    newtype Prio MaxPolicy a = MaxP a deriving (Binary, Eq)
+    newtype Prio MaxPolicy a = MaxP a deriving (Eq)
     type    Val  MaxPolicy a = ()
 
     split x           = (MaxP x, ())
@@ -140,7 +139,7 @@ instance (Show a) => Show (Prio MaxPolicy a) where
 data FstMinPolicy
 
 instance (Ord prio) => HeapItem FstMinPolicy (prio, val) where
-    newtype Prio FstMinPolicy (prio, val) = FMinP prio deriving (Binary, Eq, Ord)
+    newtype Prio FstMinPolicy (prio, val) = FMinP prio deriving (Eq, Ord)
     type    Val  FstMinPolicy (prio, val) = val
 
     split (p,       v) = (FMinP p, v)
@@ -157,7 +156,7 @@ instance (Show prio) => Show (Prio FstMinPolicy (prio, val)) where
 data FstMaxPolicy
 
 instance (Ord prio) => HeapItem FstMaxPolicy (prio, val) where
-    newtype Prio FstMaxPolicy (prio, val) = FMaxP prio deriving (Binary, Eq)
+    newtype Prio FstMaxPolicy (prio, val) = FMaxP prio deriving (Eq)
     type    Val  FstMaxPolicy (prio, val) = val
 
     split (p,       v) = (FMaxP p, v)
