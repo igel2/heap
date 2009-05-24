@@ -6,12 +6,10 @@ module Test.Heap
 
 import Data.Char
 import Data.Heap
-import Data.List hiding ( break, null, partition, span, splitAt, union )
-import Data.Ord
 import Prelude hiding ( break, null, span, splitAt )
 import Test.Heap.Common
 import Test.Heap.Internal hiding ( runTests )
-import Test.Heap.Item hiding ( runTests )
+import Test.Heap.Item ()
 
 runTests :: IO ()
 runTests = do

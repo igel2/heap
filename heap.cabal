@@ -1,27 +1,25 @@
-
 Name:                heap
 Version:             1.0.0
 
 Category:            Data Structures
 Synopsis:            Heaps in Haskell
-Description:         A flexible Haskell heap implementation
+Description:         A flexible Haskell implementation of minimum, maximum,
+                     minimum-priority, maximum-priority and custom-ordered
+                     heaps.
 
 License:             BSD3
 License-File:        LICENSE
 Copyright:           (c) 2008-2009, Stephan Friedrichs
-
 Author:              Stephan Friedrichs
 Maintainer:          Stephan Friedrichs (deduktionstheorem at web dot de)
 
 Build-Type:          Simple
 Cabal-Version:       >= 1.2
-Extra-Source-Files:
-    Test.lhs
-  , Test/Heap.hs
-  , Test/Heap/Common.hs
-  , Test/Heap/Internal.hs
-  , Test/Heap/Item.hs
-Tested-With:         GHC
+Tested-With:         GHC == 6.10.2, GHC == 6.10.3
+
+Flag Test
+  Description:       Build a binary running test cases
+  Default:           False
 
 Library
   Build-Depends:     base >= 3 && < 5
@@ -40,3 +38,19 @@ Library
     , ScopedTypeVariables
     , TypeFamilies
 
+Executable heap-tests
+  if !flag( Test )
+    Buildable:       False
+  Main-Is:
+      Test.hs
+  Other-Modules:
+      Data.Heap
+    , Data.Heap.Internal
+    , Data.Heap.Item
+    , Test.Heap
+    , Test.Heap.Common
+    , Test.Heap.Internal
+    , Test.Heap.Item
+  Build-Depends:     QuickCheck >= 2 && < 3
+  CPP-Options:       -D__TEST__
+  GHC-Options:       -Wall -fwarn-tabs -fno-ignore-asserts

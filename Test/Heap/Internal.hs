@@ -115,13 +115,13 @@ spanProperty i n = let
 listProperty :: (Ord prio) => [prio] -> Bool
 listProperty xs = let
     list = List.sort xs
-    heap = fromFoldable (zip xs [1..])
+    heap = fromFoldable (zip xs [(1 :: Int) ..])
     in
     list == fmap fst (List.sort (toList heap))
 
 sortedListProperty :: (Ord prio) => [prio] -> Bool
 sortedListProperty xs = let
     list = List.sort xs
-    heap = fromDescFoldable (zip (reverse list) [1..])
+    heap = fromDescFoldable (zip (reverse list) [(1 :: Int) ..])
     in
     list == fmap fst (toAscList heap)

@@ -7,7 +7,6 @@ module Test.Heap.Common
     , foldableProperty
     ) where
 
-import Data.Binary
 import Data.Foldable ( Foldable(..) )
 import Data.Monoid
 import Prelude hiding ( foldl, foldr )
