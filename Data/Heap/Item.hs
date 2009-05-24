@@ -113,9 +113,9 @@ instance (Read a) => Read (Prio MinPolicy a) where
     readListPrec = fmap (fmap MinP) readListPrec
 
 instance (Show a) => Show (Prio MinPolicy a) where
-    show         = show . unMinP
-    showsPrec d  = showsPrec d . unMinP
-    showList     = showList . (fmap unMinP)
+    show        = show . unMinP
+    showsPrec d = showsPrec d . unMinP
+    showList    = showList . (fmap unMinP)
 
 -- | Policy type for a 'MaxHeap'.
 data MaxPolicy
@@ -135,9 +135,9 @@ instance (Read a) => Read (Prio MaxPolicy a) where
     readListPrec = fmap (fmap MaxP) readListPrec
 
 instance (Show a) => Show (Prio MaxPolicy a) where
-    show         = show . unMaxP
-    showsPrec d  = showsPrec d . unMaxP
-    showList     = showList . (fmap unMaxP)
+    show        = show . unMaxP
+    showsPrec d = showsPrec d . unMaxP
+    showList    = showList . (fmap unMaxP)
 
 -- | Policy type for a @(prio, val)@ 'MinPrioHeap'.
 data FstMinPolicy
@@ -154,9 +154,9 @@ instance (Read prio) => Read (Prio FstMinPolicy (prio, val)) where
     readListPrec = fmap (fmap FMinP) readListPrec
 
 instance (Show prio) => Show (Prio FstMinPolicy (prio, val)) where
-    show         = show . unFMinP
-    showsPrec d  = showsPrec d . unFMinP
-    showList     = showList . (fmap unFMinP)
+    show        = show . unFMinP
+    showsPrec d = showsPrec d . unFMinP
+    showList    = showList . (fmap unFMinP)
 
 -- | Policy type for a @(prio, val)@ 'MaxPrioHeap'.
 data FstMaxPolicy
@@ -176,9 +176,9 @@ instance (Read prio) => Read (Prio FstMaxPolicy (prio, val)) where
     readListPrec = fmap (fmap FMaxP) readListPrec
 
 instance (Show prio) => Show (Prio FstMaxPolicy (prio, val)) where
-    show         = show . unFMaxP
-    showsPrec d  = showsPrec d . unFMaxP
-    showList     = showList . (fmap unFMaxP)
+    show        = show . unFMaxP
+    showsPrec d = showsPrec d . unFMaxP
+    showList    = showList . (fmap unFMaxP)
 
 -- | 'split' a function on @item@s to one on priority-value pairs.
 splitF :: (HeapItem pol item) => (item -> a) -> (Prio pol item, Val pol item) -> a
