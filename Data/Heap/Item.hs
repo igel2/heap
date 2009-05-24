@@ -16,8 +16,8 @@ module Data.Heap.Item
     , splitF
     ) where
 
-import Data.Heap.Internal ( HeapT )
-import Text.Read ( Read(..) )
+import Data.Heap.Internal
+import Text.Read
 
 -- | This type alias is an abbreviation for a 'HeapT' which uses the 'HeapItem'
 -- instance of @pol item@ to organise its elements.
