@@ -102,7 +102,7 @@ class (Ord (Prio pol item)) => HeapItem pol item where
 data MinPolicy
 
 instance (Ord a) => HeapItem MinPolicy a where
-    newtype Prio MinPolicy a = MinP a deriving (Eq, Ord)
+    newtype Prio MinPolicy a = MinP { unMinP :: a } deriving (Eq, Ord)
     type    Val  MinPolicy a = ()
 
     split x           = (MinP x, ())
@@ -113,13 +113,15 @@ instance (Read a) => Read (Prio MinPolicy a) where
     readListPrec = fmap (fmap MinP) readListPrec
 
 instance (Show a) => Show (Prio MinPolicy a) where
-    show (MinP x) = show x
+    show         = show . unMinP
+    showsPrec d  = showsPrec d . unMinP
+    showList     = showList . (fmap unMinP)
 
 -- | Policy type for a 'MaxHeap'.
 data MaxPolicy
 
 instance (Ord a) => HeapItem MaxPolicy a where
-    newtype Prio MaxPolicy a = MaxP a deriving (Eq)
+    newtype Prio MaxPolicy a = MaxP { unMaxP :: a } deriving (Eq)
     type    Val  MaxPolicy a = ()
 
     split x           = (MaxP x, ())
@@ -133,13 +135,15 @@ instance (Read a) => Read (Prio MaxPolicy a) where
     readListPrec = fmap (fmap MaxP) readListPrec
 
 instance (Show a) => Show (Prio MaxPolicy a) where
-    show (MaxP x) = show x
+    show         = show . unMaxP
+    showsPrec d  = showsPrec d . unMaxP
+    showList     = showList . (fmap unMaxP)
 
 -- | Policy type for a @(prio, val)@ 'MinPrioHeap'.
 data FstMinPolicy
 
 instance (Ord prio) => HeapItem FstMinPolicy (prio, val) where
-    newtype Prio FstMinPolicy (prio, val) = FMinP prio deriving (Eq, Ord)
+    newtype Prio FstMinPolicy (prio, val) = FMinP { unFMinP :: prio } deriving (Eq, Ord)
     type    Val  FstMinPolicy (prio, val) = val
 
     split (p,       v) = (FMinP p, v)
@@ -150,13 +154,15 @@ instance (Read prio) => Read (Prio FstMinPolicy (prio, val)) where
     readListPrec = fmap (fmap FMinP) readListPrec
 
 instance (Show prio) => Show (Prio FstMinPolicy (prio, val)) where
-    show (FMinP x) = show x
+    show         = show . unFMinP
+    showsPrec d  = showsPrec d . unFMinP
+    showList     = showList . (fmap unFMinP)
 
 -- | Policy type for a @(prio, val)@ 'MaxPrioHeap'.
 data FstMaxPolicy
 
 instance (Ord prio) => HeapItem FstMaxPolicy (prio, val) where
-    newtype Prio FstMaxPolicy (prio, val) = FMaxP prio deriving (Eq)
+    newtype Prio FstMaxPolicy (prio, val) = FMaxP { unFMaxP :: prio } deriving (Eq)
     type    Val  FstMaxPolicy (prio, val) = val
 
     split (p,       v) = (FMaxP p, v)
@@ -170,7 +176,9 @@ instance (Read prio) => Read (Prio FstMaxPolicy (prio, val)) where
     readListPrec = fmap (fmap FMaxP) readListPrec
 
 instance (Show prio) => Show (Prio FstMaxPolicy (prio, val)) where
-    show (FMaxP x) = show x
+    show         = show . unFMaxP
+    showsPrec d  = showsPrec d . unFMaxP
+    showList     = showList . (fmap unFMaxP)
 
 -- | 'split' a function on @item@s to one on priority-value pairs.
 splitF :: (HeapItem pol item) => (item -> a) -> (Prio pol item, Val pol item) -> a
