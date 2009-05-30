@@ -26,15 +26,15 @@ runTests = do
     qc "partition" (partitionProperty testProp :: HeapT Char Int -> Bool)
     qc "splitAt" splitAtProperty
     qc "span" spanProperty
-    qc "fromFoldable/toList" (listProperty :: [Char] -> Bool)
-    qc "fromDescFoldable/toAscList" (sortedListProperty :: [Char] -> Bool)
+    qc "fromList/toList" (listProperty :: [Char] -> Bool)
+    qc "fromDescList/toAscList" (sortedListProperty :: [Char] -> Bool)
     where
     testProp :: Char -> Int -> Bool
     testProp c i = even i && isLetter c
 
 instance (Arbitrary prio, Arbitrary val, Ord prio) => Arbitrary (HeapT prio val) where
-    arbitrary = fmap (fromFoldable . take 100) arbitrary
-    shrink    = fmap fromFoldable . shrink . toList
+    arbitrary = fmap (fromList . take 100) arbitrary
+    shrink    = fmap fromList . shrink . toList
 
 leftistHeapProperty :: (Ord prio) => HeapT prio val -> Bool
 leftistHeapProperty Empty = True
@@ -60,14 +60,14 @@ fmapProperty f = leftistHeapProperty . fmap f
 sizeProperty :: Int -> Bool
 sizeProperty n = let
     n' = abs n `mod` 100
-    h  = fromFoldable (zip [1..n'] (repeat ())) :: HeapT Int ()
+    h  = fromList (zip [1..n'] (repeat ())) :: HeapT Int ()
     in
     size h == n' && if n' == 0 then isEmpty h else not (isEmpty h)
 
 viewProperty :: [Int] -> Bool
 viewProperty []   = True
 viewProperty list = let
-    heap = fromFoldable (zip list (repeat ()))
+    heap = fromList (zip list (repeat ()))
     m    = minimum list
     in case view heap of
         Nothing          -> False -- list is not empty
@@ -88,8 +88,8 @@ partitionProperty p heap = let
     in
     (heap, empty) == partition (const True) heap
         && (empty, heap) == partition (const False) heap
-        && yes == fromFoldable yes'
-        && no == fromFoldable no'
+        && yes == fromList yes'
+        && no == fromList no'
         && yes `union` no == heap -- nothing gets lost
 
 splitAtProperty :: Int -> Int -> Bool
@@ -98,9 +98,9 @@ splitAtProperty i n = let
     n'     = n `mod` 100
     ab     = [1..n']
     (a, b) = List.splitAt i' ab
-    heap   = fromFoldable $ zip ab (repeat ())
+    heap   = fromList $ zip ab (repeat ())
     in
-    Heap.splitAt i' heap == (zip a (repeat ()), fromFoldable (zip b (repeat ())))
+    Heap.splitAt i' heap == (zip a (repeat ()), fromList (zip b (repeat ())))
 
 spanProperty :: Int -> Int -> Bool
 spanProperty i n = let
@@ -108,20 +108,20 @@ spanProperty i n = let
     n'      = n `mod` 100
     ab      = [1..n']
     (a, b)  = List.span (<= i') ab
-    (a', h) = Heap.span ((<=i') . fst) $ fromFoldable (zip ab (repeat ()))
+    (a', h) = Heap.span ((<=i') . fst) $ fromList (zip ab (repeat ()))
     in
-    a == (fmap fst a') && h == fromFoldable (zip b (repeat ()))
+    a == (fmap fst a') && h == fromList (zip b (repeat ()))
 
 listProperty :: (Ord prio) => [prio] -> Bool
 listProperty xs = let
     list = List.sort xs
-    heap = fromFoldable (zip xs [(1 :: Int) ..])
+    heap = fromList (zip xs [(1 :: Int) ..])
     in
     list == fmap fst (List.sort (toList heap))
 
 sortedListProperty :: (Ord prio) => [prio] -> Bool
 sortedListProperty xs = let
     list = List.sort xs
-    heap = fromDescFoldable (zip (reverse list) [(1 :: Int) ..])
+    heap = fromDescList (zip (reverse list) [(1 :: Int) ..])
     in
     list == fmap fst (toAscList heap)

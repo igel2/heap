@@ -46,9 +46,9 @@ listProperty heap = let
     pairs = toList heap
     asc   = toAscList heap
     desc  = toDescList heap
-    heap2 = fromFoldable pairs
-    heap3 = fromAscFoldable asc
-    heap4 = fromDescFoldable desc
+    heap2 = fromList pairs
+    heap3 = fromAscList asc
+    heap4 = fromDescList desc
     in and (fmap leftistHeapProperty [heap2, heap3, heap4])
         && heap == heap2
         && heap == heap3
@@ -78,7 +78,7 @@ splitAtProperty :: (HeapItem pol item, Ord (Val pol item))
 splitAtProperty n heap = let
     (before, after) = splitAt n heap
     in n < 0 || length before == n || isEmpty after
-        && heap == fromAscFoldable before `union` after
+        && heap == fromAscList before `union` after
 
 spanProperty :: (HeapItem pol item) => (item -> Bool) -> Heap pol item -> Bool
 spanProperty p heap = let

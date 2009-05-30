@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 -- | This module provides a simple leftist-heap implementation based on Chris
 -- Okasaki's book \"Purely Functional Data Structures\", Cambridge University
@@ -23,13 +23,12 @@ module Data.Heap.Internal
       -- * Subranges
     , splitAt, span
       -- * Conversion
-    , fromFoldable, fromDescFoldable, fromDescList
-    , toList, toAscList
+    , fromList, toList
+    , fromDescList, toAscList
     ) where
 
 import Control.Exception ( assert )
 import Data.Foldable ( Foldable(..), foldl' )
-import qualified Data.Foldable as Foldable ( toList )
 import Data.List ( groupBy, sortBy )
 import Data.Monoid ( Monoid(..) )
 import Data.Ord ( comparing )
@@ -53,14 +52,13 @@ data HeapT prio val
 
 instance (Read prio, Read val, Ord prio) => Read (HeapT prio val) where
     readPrec     = parens $ prec 10 $ do
-        Ident "fromFoldable" <- lexP
-        xs                   <- readPrec
-        return ((fromFoldable :: [(prio, val)] -> HeapT prio val) xs)
+        Ident "fromList" <- lexP
+        fmap fromList readPrec
     readListPrec = readListPrecDefault
 
 instance (Show prio, Show val) => Show (HeapT prio val) where
     showsPrec d heap = showParen (d > 10)
-        $ showString "fromFoldable " . (showsPrec 11 (toList heap))
+        $ showString "fromList " . (showsPrec 11 (toList heap))
 
 instance (Ord prio, Ord val) => Eq (HeapT prio val) where
     heap1 == heap2 = size heap1 == size heap2 && EQ == compare heap1 heap2
@@ -217,23 +215,9 @@ span f heap = case view heap of
 {-# INLINE span #-}
 
 -- | /O(n log n)/. Build a 'HeapT' from the given priority-value pairs.
-fromFoldable :: (Foldable f, Ord prio) => f (prio, val) -> HeapT prio val
-fromFoldable = fromDescFoldable . sortBy (flip (comparing fst)) . Foldable.toList
-{-# INLINE fromFoldable #-}
-{-# SPECIALISE fromFoldable :: (Ord prio) => [(prio, val)] -> HeapT prio val #-}
-
--- | /O(n)/. Create a 'HeapT' from a 'Foldable' providing its priority-value pairs
--- in descending order of priority.
---
--- /The precondition is not checked/.
-fromDescFoldable :: (Foldable f, Ord prio) => f (prio, val) -> HeapT prio val
-fromDescFoldable = foldl' (\h (p, v) -> uncheckedCons p v h) empty
-{-# INLINE fromDescFoldable #-}
---{-# SPECIALISE fromDescFoldable :: (Ord prio) => [(prio, val)] -> HeapT prio val #-}
-
---TODO:
-fromDescList :: (Ord prio) => [(prio, val)] -> HeapT prio val
-fromDescList = foldl' (\h (p, v) -> uncheckedCons p v h) empty
+fromList :: (Ord prio) => [(prio, val)] -> HeapT prio val
+fromList = fromDescList . sortBy (flip (comparing fst))
+{-# INLINE fromList #-}
 
 -- | /O(n log n)/. List all priority-value pairs of the 'HeapT' in no specific
 -- order.
@@ -247,6 +231,14 @@ toList heap  = let
         then toList right ++ toList left
         else toList left  ++ toList right
 {-# INLINE toList #-}
+
+-- | /O(n)/. Create a 'HeapT' from a list providing its priority-value pairs in
+-- descending order of priority.
+--
+-- /The precondition is not checked/.
+fromDescList :: (Ord prio) => [(prio, val)] -> HeapT prio val
+fromDescList = foldl' (\h (p, v) -> uncheckedCons p v h) empty
+{-# INLINE fromDescList #-}
 
 -- | /O(n log n)/. List the priority-value pairs of the 'HeapT' in ascending
 -- order of priority.

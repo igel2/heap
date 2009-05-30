@@ -35,7 +35,6 @@ Library
     , FlexibleContexts
     , FlexibleInstances
     , MultiParamTypeClasses
-    , ScopedTypeVariables
     , TypeFamilies
 
 Executable heap-tests

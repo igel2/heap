@@ -44,15 +44,13 @@ module Data.Heap
     , take, drop, splitAt
     , takeWhile, dropWhile, span, break
       -- * Conversion
-      -- ** Foldable
-    , fromFoldable, fromAscFoldable, fromDescFoldable
       -- ** List
-      -- $foldable_remarks
-    , toList, toAscList, toDescList
+    , fromList, toList
+      -- ** Ordered list
+    , fromAscList, toAscList
+    , fromDescList, toDescList
     ) where
 
-import Data.Foldable as Foldable ( Foldable )
-import qualified Data.Foldable as Foldable ( toList )
 import Data.Heap.Item
 import Data.Heap.Internal ( HeapT )
 import qualified Data.Heap.Internal as I
@@ -132,49 +130,39 @@ break :: (HeapItem pol item)
     => (item -> Bool) -> Heap pol item -> ([item], Heap pol item)
 break p = span (not . p)
 
--- $foldable_remarks
--- Note that there are no @fromList@ functions, because they're implied by
--- 'fromFoldable' and friends (@instance Foldable []@).
-
 -- | /O(n log n)/. Build a 'Heap' from the given items. Assuming you have a
--- sorted 'Foldable', you probably want to use 'fromDescFoldable' or
--- 'fromAscFoldable', they are faster than this function.
-fromFoldable :: (Foldable f, Functor f, HeapItem pol item)
-    => f item -> Heap pol item
-fromFoldable = I.fromFoldable . fmap split
-{-# SPECIALISE fromFoldable :: (HeapItem pol item) => [item] -> Heap pol item #-}
-
--- | /O(n)/. Create a 'Heap' from a 'Foldable' providing its items in ascending
--- order of priority (i. e. in the same order they will be removed from the
--- 'Heap'). This function is faster than 'fromFoldable' but not as fast as
--- 'fromDescFoldable'.
---
--- /The precondition is not checked/.
-fromAscFoldable :: (Foldable f, HeapItem pol item) => f item -> Heap pol item
-fromAscFoldable = fromDescFoldable . reverse . Foldable.toList
-{-# SPECIALISE fromAscFoldable :: (HeapItem pol item) => [item] -> Heap pol item #-}
-
--- | /O(n)/. Create a 'Heap' from a 'Foldable' providing its items in descending
--- order of priority (i. e. they will be removed inversely from the 'Heap').
--- Prefer this function over 'fromFoldable' and 'fromAscFoldable', as it's faster.
---
--- /The precondition is not checked/.
-fromDescFoldable :: (Foldable f, Functor f, HeapItem pol item)
-    => f item -> Heap pol item
-fromDescFoldable = I.fromDescFoldable . fmap split
-{-# SPECIALISE fromDescFoldable :: (HeapItem pol item) => [item] -> Heap pol item #-}
+-- sorted list, you probably want to use 'fromDescList' or 'fromAscList', they
+-- are faster than this function.
+fromList :: (HeapItem pol item) => [item] -> Heap pol item
+fromList = I.fromList . fmap split
 
 -- | /O(n log n)/. List all items of the 'Heap' in no specific order.
 toList :: (HeapItem pol item) => Heap pol item -> [item]
 toList = fmap merge . I.toList
 
+-- | /O(n)/. Create a 'Heap' from a list providing its items in ascending order
+-- of priority (i. e. in the same order they will be removed from the 'Heap').
+-- This function is faster than 'fromList' but not as fast as 'fromDescList'.
+--
+-- /The precondition is not checked/.
+fromAscList :: (HeapItem pol item) => [item] -> Heap pol item
+fromAscList = fromDescList . reverse
+
 -- | /O(n log n)/. List the items of the 'Heap' in ascending order of priority.
 toAscList :: (HeapItem pol item) => Heap pol item -> [item]
 toAscList = fmap merge . I.toAscList
 
+-- | /O(n)/. Create a 'Heap' from a list providing its items in descending order
+-- of priority (i. e. they will be removed inversely from the 'Heap'). Prefer
+-- this function over 'fromList' and 'fromAscList', it's faster.
+--
+-- /The precondition is not checked/.
+fromDescList :: (HeapItem pol item) => [item] -> Heap pol item
+fromDescList = I.fromDescList . fmap split
+
 -- | /O(n log n)/. List the items of the 'Heap' in descending order of priority.
 -- Note that this function is not especially efficient (it is implemented in
 -- terms of 'reverse' and 'toAscList'), it is provided as a counterpart of the
--- efficient 'fromDescFoldable' function.
+-- efficient 'fromDescList' function.
 toDescList :: (HeapItem pol item) => Heap pol item -> [item]
 toDescList = reverse . toAscList
