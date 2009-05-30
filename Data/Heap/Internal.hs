@@ -23,7 +23,7 @@ module Data.Heap.Internal
       -- * Subranges
     , splitAt, span
       -- * Conversion
-    , fromFoldable, fromDescFoldable
+    , fromFoldable, fromDescFoldable, fromDescList
     , toList, toAscList
     ) where
 
@@ -53,14 +53,14 @@ data HeapT prio val
 
 instance (Read prio, Read val, Ord prio) => Read (HeapT prio val) where
     readPrec     = parens $ prec 10 $ do
-      Ident "fromFoldable" <- lexP
-      xs                   <- readPrec
-      return ((fromFoldable :: [(prio, val)] -> HeapT prio val) xs)
+        Ident "fromFoldable" <- lexP
+        xs                   <- readPrec
+        return ((fromFoldable :: [(prio, val)] -> HeapT prio val) xs)
     readListPrec = readListPrecDefault
 
 instance (Show prio, Show val) => Show (HeapT prio val) where
     showsPrec d heap = showParen (d > 10)
-      $ showString "fromFoldable " . (showsPrec 11 (toList heap))
+        $ showString "fromFoldable " . (showsPrec 11 (toList heap))
 
 instance (Ord prio, Ord val) => Eq (HeapT prio val) where
     heap1 == heap2 = size heap1 == size heap2 && EQ == compare heap1 heap2
@@ -122,24 +122,25 @@ singleton p v = Tree { _rank     = 1
 -- /The precondition is not checked/.
 uncheckedCons :: (Ord prio) => prio -> val -> HeapT prio val -> HeapT prio val
 uncheckedCons p v heap = assert (maybe True (\(p', _, _) -> p <= p') (view heap))
-                         Tree { _rank     = 1
-                              , _size     = 1 + size heap
-                              , _priority = p
-                              , _value    = v
-                              , _left     = heap
-                              , _right    = empty
-                              }
+    Tree { _rank     = 1
+         , _size     = 1 + size heap
+         , _priority = p
+         , _value    = v
+         , _left     = heap
+         , _right    = empty
+         }
 {-# INLINE uncheckedCons #-}
 
 -- | /O(log max(n, m))/. Form the union of two 'HeapT's.
 union :: (Ord prio) => HeapT prio val -> HeapT prio val -> HeapT prio val
 union heap  Empty = heap
 union Empty heap  = heap
-union heap1 heap2 = let p1 = _priority heap1
-                        p2 = _priority heap2
-                    in if p1 < p2
-    then makeT p1 (_value heap1) (_left heap1) (union (_right heap1) heap2)
-    else makeT p2 (_value heap2) (_left heap2) (union (_right heap2) heap1)
+union heap1 heap2 = let
+    p1 = _priority heap1
+    p2 = _priority heap2
+    in if p1 < p2
+        then makeT p1 (_value heap1) (_left heap1) (union (_right heap1) heap2)
+        else makeT p2 (_value heap2) (_left heap2) (union (_right heap2) heap1)
 
 -- | Build a 'HeapT' from a priority, a value and two more 'HeapT's. Therefore,
 -- the /priority has to be less or equal/ than all priorities in both 'HeapT'
@@ -147,13 +148,15 @@ union heap1 heap2 = let p1 = _priority heap1
 --
 -- /The precondition is not checked/.
 makeT :: (Ord prio) => prio -> val -> HeapT prio val -> HeapT prio val -> HeapT prio val
-makeT p v a b = let ra = rank a
-                    rb = rank b
-                    s  = size a + size b + 1
-                in assert (checkPrio a && checkPrio b)
-                       $ if ra > rb then Tree (rb + 1) s p v a b
-                                    else Tree (ra + 1) s p v b a
-    where checkPrio = maybe True (\(p', _, _) -> p <= p') . view
+makeT p v a b = let
+    ra = rank a
+    rb = rank b
+    s  = size a + size b + 1
+    in assert (checkPrio a && checkPrio b) $ if ra > rb
+        then Tree (rb + 1) s p v a b
+        else Tree (ra + 1) s p v b a
+    where
+    checkPrio = maybe True (\(p', _, _) -> p <= p') . view
 {-# INLINE makeT #-}
 
 -- | Build the union of all given 'HeapT's.
@@ -162,9 +165,10 @@ unions heaps = case tournamentFold' heaps of
     []  -> empty
     [h] -> h
     hs  -> unions hs
-    where tournamentFold' :: (Monoid m) => [m] -> [m]
-          tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
-          tournamentFold' xs         = xs
+    where
+    tournamentFold' :: (Monoid m) => [m] -> [m]
+    tournamentFold' (x1:x2:xs) = (: tournamentFold' xs) $! mappend x1 x2
+    tournamentFold' xs         = xs
 
 -- | /O(log n)/ for the tail, /O(1)/ for the head. Find the priority-value pair
 -- with minimal priority and delete it from the 'HeapT' (i. e. find head and tail
@@ -178,14 +182,15 @@ view heap  = Just (_priority heap, _value heap, union (_left heap) (_right heap)
 -- priority-value pairs in @h1@ fulfil the predicate @p@, those in @h2@ don't.
 -- @'union' h1 h2 = h@.
 partition :: (Ord prio) => ((prio, val) -> Bool) -> HeapT prio val
-          -> (HeapT prio val, HeapT prio val)
+    -> (HeapT prio val, HeapT prio val)
 partition _ Empty  = (empty, empty)
 partition f heap
     | f (p, v)  = (makeT p v l1 r1, union l2 r2)
     | otherwise = (union l1 r1, makeT p v l2 r2)
-    where (p, v)   = (_priority heap, _value heap)
-          (l1, l2) = partition f (_left heap)
-          (r1, r2) = partition f (_right heap)
+    where
+    (p, v)   = (_priority heap, _value heap)
+    (l1, l2) = partition f (_left heap)
+    (r1, r2) = partition f (_right heap)
 {-# INLINE partition #-}
 
 -- | @'splitAt' n h@: A list of the lowest @n@ priority-value pairs of @h@, in
@@ -193,9 +198,8 @@ partition f heap
 splitAt :: (Ord prio) => Int -> HeapT prio val -> ([(prio, val)], HeapT prio val)
 splitAt n heap
     | n > 0     = case view heap of
-                    Nothing         -> ([], empty)
-                    Just (p, v, hs) -> let (xs, heap') = splitAt (n-1) hs
-                                       in ((p, v) : xs, heap')
+        Nothing         -> ([], empty)
+        Just (p, v, hs) -> let (xs, heap') = splitAt (n-1) hs in ((p, v):xs, heap')
     | otherwise = ([], heap)
 {-# INLINE splitAt #-}
 
@@ -204,23 +208,19 @@ splitAt n heap
 -- removed.
 span :: (Ord prio) => ((prio, val) -> Bool) -> HeapT prio val
      -> ([(prio, val)], HeapT prio val)
-span f heap
-    = case view heap of
-        Nothing         -> ([], empty)
-        Just (p, v, hs) -> let pv = (p, v)
-            in if f pv then let (xs, heap') = span f hs in (pv:xs, heap')
-                       else ([], heap)
+span f heap = case view heap of
+    Nothing         -> ([], empty)
+    Just (p, v, hs) -> let pv = (p, v)
+        in if f pv
+            then let (xs, heap') = span f hs in (pv:xs, heap')
+            else ([], heap)
 {-# INLINE span #-}
 
 -- | /O(n log n)/. Build a 'HeapT' from the given priority-value pairs.
 fromFoldable :: (Foldable f, Ord prio) => f (prio, val) -> HeapT prio val
-fromFoldable xs = let
-    list = Foldable.toList xs
-    heap = fromDescFoldable $ sortBy (flip (comparing fst)) list
-    in heap
+fromFoldable = fromDescFoldable . sortBy (flip (comparing fst)) . Foldable.toList
 {-# INLINE fromFoldable #-}
 {-# SPECIALISE fromFoldable :: (Ord prio) => [(prio, val)] -> HeapT prio val #-}
---TODO fromFoldable (list::[a]) = fromDescFoldable $ sortBy (flip (comparing fst)) list
 
 -- | /O(n)/. Create a 'HeapT' from a 'Foldable' providing its priority-value pairs
 -- in descending order of priority.
@@ -229,17 +229,23 @@ fromFoldable xs = let
 fromDescFoldable :: (Foldable f, Ord prio) => f (prio, val) -> HeapT prio val
 fromDescFoldable = foldl' (\h (p, v) -> uncheckedCons p v h) empty
 {-# INLINE fromDescFoldable #-}
-{-# SPECIALISE fromDescFoldable :: (Ord prio) => [(prio, val)] -> HeapT prio val #-}
+--{-# SPECIALISE fromDescFoldable :: (Ord prio) => [(prio, val)] -> HeapT prio val #-}
+
+--TODO:
+fromDescList :: (Ord prio) => [(prio, val)] -> HeapT prio val
+fromDescList = foldl' (\h (p, v) -> uncheckedCons p v h) empty
 
 -- | /O(n log n)/. List all priority-value pairs of the 'HeapT' in no specific
 -- order.
 toList :: HeapT prio val -> [(prio, val)]
 toList Empty = []
-toList heap  = let left  = _left heap
-                   right = _right heap
-               in (_priority heap, _value heap) : if (size right) < (size left)
-                                                  then toList right ++ toList left
-                                                  else toList left  ++ toList right
+toList heap  = let
+    left  = _left heap
+    right = _right heap
+    in
+    (_priority heap, _value heap) : if (size right) < (size left)
+        then toList right ++ toList left
+        else toList left  ++ toList right
 {-# INLINE toList #-}
 
 -- | /O(n log n)/. List the priority-value pairs of the 'HeapT' in ascending
@@ -252,6 +258,6 @@ toAscList = fst . span (const True)
 -- but don't ignore the value @val@ when sorting.
 toPairAscList :: (Ord prio, Ord val) => HeapT prio val -> [(prio, val)]
 toPairAscList = concat
-                . fmap (sortBy (comparing snd))
-                . groupBy (\x y -> fst x == fst y)
-                . toAscList
+    . fmap (sortBy (comparing snd))
+    . groupBy (\x y -> fst x == fst y)
+    . toAscList

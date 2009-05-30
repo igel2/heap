@@ -93,8 +93,8 @@ filter p = fst . (partition p)
 
 -- | Partition the 'Heap' into two. @'partition' p h = (h1, h2)@: All items in
 -- @h1@ fulfil the predicate @p@, those in @h2@ don't. @'union' h1 h2 = h@.
-partition :: (HeapItem pol item) => (item -> Bool) -> Heap pol item
-          -> (Heap pol item, Heap pol item)
+partition :: (HeapItem pol item)
+    => (item -> Bool) -> Heap pol item -> (Heap pol item, Heap pol item)
 partition = I.partition . splitF
 
 -- | Take the first @n@ items from the 'Heap'.
@@ -116,20 +116,20 @@ takeWhile p = fst . (span p)
 
 -- | @'dropWhile' p h@: Remove the longest prefix of items in @h@ that satisfy
 -- @p@.
-dropWhile :: (HeapItem pol item) => (item -> Bool) -> Heap pol item
-          -> Heap pol item
+dropWhile :: (HeapItem pol item)
+    => (item -> Bool) -> Heap pol item -> Heap pol item
 dropWhile p = snd . (span p)
 
 -- | @'span' p h@: Return the longest prefix of items in @h@ that satisfy @p@ and
 -- @h@, with those elements removed.
-span :: (HeapItem pol item) => (item -> Bool) -> Heap pol item
-     -> ([item], Heap pol item)
+span :: (HeapItem pol item)
+    => (item -> Bool) -> Heap pol item -> ([item], Heap pol item)
 span p heap = let (xs, heap') = I.span (splitF p) heap in (fmap merge xs, heap')
 
 -- | @'break' p h@: The longest prefix of items in @h@ that do /not/ satisfy @p@
 -- and @h@, with those elements removed.
-break :: (HeapItem pol item) => (item -> Bool) -> Heap pol item
-      -> ([item], Heap pol item)
+break :: (HeapItem pol item)
+    => (item -> Bool) -> Heap pol item -> ([item], Heap pol item)
 break p = span (not . p)
 
 -- $foldable_remarks
@@ -140,7 +140,7 @@ break p = span (not . p)
 -- sorted 'Foldable', you probably want to use 'fromDescFoldable' or
 -- 'fromAscFoldable', they are faster than this function.
 fromFoldable :: (Foldable f, Functor f, HeapItem pol item)
-             => f item -> Heap pol item
+    => f item -> Heap pol item
 fromFoldable = I.fromFoldable . fmap split
 {-# SPECIALISE fromFoldable :: (HeapItem pol item) => [item] -> Heap pol item #-}
 
@@ -160,7 +160,7 @@ fromAscFoldable = fromDescFoldable . reverse . Foldable.toList
 --
 -- /The precondition is not checked/.
 fromDescFoldable :: (Foldable f, Functor f, HeapItem pol item)
-                 => f item -> Heap pol item
+    => f item -> Heap pol item
 fromDescFoldable = I.fromDescFoldable . fmap split
 {-# SPECIALISE fromDescFoldable :: (HeapItem pol item) => [item] -> Heap pol item #-}
 
