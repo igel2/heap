@@ -14,7 +14,7 @@ Author:              Stephan Friedrichs
 Maintainer:          Stephan Friedrichs (deduktionstheorem at web dot de)
 
 Build-Type:          Simple
-Cabal-Version:       >= 1.2
+Cabal-Version:       >= 1.2.3
 Tested-With:         GHC == 6.10.2, GHC == 6.10.3
 
 Flag Test
