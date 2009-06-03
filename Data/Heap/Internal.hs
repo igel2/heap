@@ -27,14 +27,14 @@ module Data.Heap.Internal
     , fromDescList, toAscList
     ) where
 
-import Control.Exception ( assert )
+import Control.Exception
 import Data.Foldable ( Foldable(..), foldl' )
 import Data.List ( groupBy, sortBy )
-import Data.Monoid ( Monoid(..) )
-import Data.Ord ( comparing )
-import Data.Typeable ( Typeable )
+import Data.Monoid
+import Data.Ord
+import Data.Typeable
 import Prelude hiding ( foldl, span, splitAt )
-import Text.Read ( Lexeme(..), Read(..), lexP, parens, prec, readListPrecDefault )
+import Text.Read
 
 -- | The basic heap type. It stores priority-value pairs @(prio, val)@ and
 -- always keeps the pair with minimal priority on top. The value associated to
