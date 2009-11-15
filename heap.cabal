@@ -6,6 +6,7 @@ Synopsis:            Heaps in Haskell
 Description:         A flexible Haskell implementation of minimum, maximum,
                      minimum-priority, maximum-priority and custom-ordered
                      heaps.
+Homepage:            http://github.com/igel2/heap
 
 License:             BSD3
 License-File:        LICENSE
